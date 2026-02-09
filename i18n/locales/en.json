@@ -1,0 +1,45 @@
+{
+  "common": {
+    "title": "Flumen",
+    "description": "a fast, modern browser for maintainers and contributors",
+    "yes": "Yes",
+    "no": "No",
+    "cancel": "Cancel",
+    "save": "Save changes",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "close": "Close",
+    "confirm": "Confirm",
+    "loading": "Loading..."
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "issues": "Issues",
+    "pullRequests": "Pull Requests",
+    "notifications": "Notifications",
+    "settings": "Settings",
+    "search": "Search..."
+  },
+  "auth": {
+    "loginWithGithub": "Login with GitHub",
+    "login": "Login",
+    "logout": "Logout",
+    "forbidden": "You need to log in to access this page."
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "settings": {
+    "appearance": {
+      "title": "Appearance",
+      "description": "Customize how Flumen looks and feels.",
+      "theme": "Theme",
+      "accentColor": "Accent Color",
+      "resetColor": "Reset to default",
+      "language": "Language"
+    }
+  }
+}
