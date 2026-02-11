@@ -130,11 +130,47 @@
         "noResults": {
           "type": "string"
         },
-        "fetchError": {
-          "type": "string"
-        },
-        "fetchErrorDescription": {
-          "type": "string"
+        "error": {
+          "type": "object",
+          "properties": {
+            "fetchError": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "sessionExpired": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
+            "rateLimited": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
         },
         "sort": {
           "type": "object",
@@ -335,12 +371,6 @@
           "type": "string"
         },
         "hireableOff": {
-          "type": "string"
-        },
-        "emailSection": {
-          "type": "string"
-        },
-        "emailPrimary": {
           "type": "string"
         },
         "emailPublic": {
