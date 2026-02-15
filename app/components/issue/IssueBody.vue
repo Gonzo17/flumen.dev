@@ -5,6 +5,7 @@ const props = defineProps<{
   author: { login: string, avatarUrl: string }
   authorAssociation: AuthorAssociation
   createdAt: string
+  viewerCanUpdate: boolean
   reactions: ReactionGroup[]
   repo: string
   issueNumber: number
@@ -12,26 +13,25 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
-const { user } = useUserSession()
 const toast = useToast()
 
 const editingId = useState<string | null>('issue-editing-id', () => null)
 const editBody = ref('')
 const submitting = ref(false)
 
-const editing = computed(() => editingId.value === props.id)
+const editing = computed(() => props.viewerCanUpdate && editingId.value === props.id)
 const editDisabled = computed(() => editingId.value !== null && editingId.value !== props.id)
-const isOwn = computed(() => user.value?.login === props.author.login)
 const enhancedBody = computed(() => linkifyMentions(props.body))
 const { localReactions, onToggle } = useLocalReactions(computed(() => props.reactions))
 
 function startEdit() {
+  if (!props.viewerCanUpdate) return
   editBody.value = props.body
   editingId.value = props.id
 }
 
 async function saveEdit() {
-  if (!editBody.value.trim() || submitting.value) return
+  if (!props.viewerCanUpdate || !editBody.value.trim() || submitting.value) return
   submitting.value = true
 
   try {
@@ -61,7 +61,7 @@ async function saveEdit() {
         :date="createdAt"
       />
       <div
-        v-if="isOwn && !editing"
+        v-if="viewerCanUpdate && !editing"
         class="ml-auto"
       >
         <UTooltip :text="t('issues.comment.edit')">

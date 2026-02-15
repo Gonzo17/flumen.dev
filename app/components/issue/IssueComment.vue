@@ -8,16 +8,16 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
-const { user } = useUserSession()
 const toast = useToast()
 
 const editingId = useState<string | null>('issue-editing-id', () => null)
 const deleting = ref(false)
 const confirmDelete = ref(false)
 
-const editing = computed(() => editingId.value === props.comment.id)
+const editing = computed(() => canUpdate.value && editingId.value === props.comment.id)
 const editDisabled = computed(() => editingId.value !== null && editingId.value !== props.comment.id)
-const isOwn = computed(() => user.value?.login === props.comment.author.login)
+const canUpdate = computed(() => props.comment.viewerCanUpdate)
+const canDelete = computed(() => props.comment.viewerCanDelete)
 
 const enhancedBody = computed(() => linkifyMentions(props.comment.body))
 const { localReactions, onToggle } = useLocalReactions(computed(() => props.comment.reactionGroups))
@@ -27,6 +27,7 @@ function onUpdated() {
 }
 
 async function deleteComment() {
+  if (!canDelete.value) return
   deleting.value = true
   try {
     await props.removeComment(props.comment.id)
@@ -68,10 +69,13 @@ async function deleteComment() {
         :date="comment.createdAt"
       />
       <div
-        v-if="isOwn"
+        v-if="canUpdate || canDelete"
         class="ml-auto flex items-center gap-1"
       >
-        <UTooltip :text="t('issues.comment.edit')">
+        <UTooltip
+          v-if="canUpdate"
+          :text="t('issues.comment.edit')"
+        >
           <UButton
             icon="i-lucide-pencil"
             size="xs"
@@ -82,7 +86,10 @@ async function deleteComment() {
             @click="editingId = comment.id"
           />
         </UTooltip>
-        <UTooltip :text="t('issues.comment.delete')">
+        <UTooltip
+          v-if="canDelete"
+          :text="t('issues.comment.delete')"
+        >
           <UButton
             icon="i-lucide-trash-2"
             size="xs"
