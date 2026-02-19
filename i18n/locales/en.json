@@ -99,6 +99,7 @@
       "team_mention": "team mention",
       "unknown": "unknown"
     },
+    "myRepos": "My Repositories",
     "filter": {
       "public": "Public",
       "private": "Private",

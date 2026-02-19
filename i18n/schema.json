@@ -304,6 +304,9 @@
           },
           "additionalProperties": false
         },
+        "myRepos": {
+          "type": "string"
+        },
         "filter": {
           "type": "object",
           "properties": {

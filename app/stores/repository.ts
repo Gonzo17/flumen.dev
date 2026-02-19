@@ -9,6 +9,7 @@ export const useRepositoryStore = defineStore('repository', () => {
   const issueCounts = ref<Record<string, number>>({})
   const notificationCounts = ref<Record<string, number>>({})
   const activity = ref<Record<string, RepoActivity>>({})
+  const selectedOrg = ref<string | null>(null)
   const loaded = ref(false)
   const loading = ref(false)
   const errorKey = ref<string | null>(null)
@@ -33,14 +34,16 @@ export const useRepositoryStore = defineStore('repository', () => {
     loading.value = true
     errorKey.value = null
     try {
-      // Repos first (blocking — needed for the list)
-      repos.value = await apiFetch<Repository[]>('/api/repository')
+      const params = selectedOrg.value ? { org: selectedOrg.value } : undefined
 
-      // Counts + activity in parallel (non-blocking enrichment)
+      // Repos first (blocking — needed for the list)
+      repos.value = await apiFetch<Repository[]>('/api/repository', { params })
+
+      // Counts + activity in parallel (non-blocking enrichment, same org scope)
       const [counts, notifications, act] = await Promise.all([
-        apiFetch<{ prCounts: Record<string, number>, issueCounts: Record<string, number> }>('/api/repository/counts'),
-        apiFetch<Record<string, number>>('/api/repository/notifications'),
-        apiFetch<Record<string, RepoActivity>>('/api/repository/activity'),
+        apiFetch<{ prCounts: Record<string, number>, issueCounts: Record<string, number> }>('/api/repository/counts', { params }),
+        apiFetch<Record<string, number>>('/api/repository/notifications', { params }),
+        apiFetch<Record<string, RepoActivity>>('/api/repository/activity', { params }),
       ])
       prCounts.value = counts.prCounts
       issueCounts.value = counts.issueCounts
@@ -57,6 +60,12 @@ export const useRepositoryStore = defineStore('repository', () => {
     }
   }
 
+  async function selectOrg(org: string | null) {
+    selectedOrg.value = org
+    loaded.value = false
+    await fetchAll()
+  }
+
   async function refresh() {
     loaded.value = false
     await fetchAll()
@@ -69,11 +78,13 @@ export const useRepositoryStore = defineStore('repository', () => {
     issueCounts,
     notificationCounts,
     activity,
+    selectedOrg,
     loaded,
     loading,
     errorKey,
     // Actions
     fetchAll,
+    selectOrg,
     refresh,
   }
 })
