@@ -8,6 +8,9 @@ const { t } = useI18n()
 const store = useFocusStore()
 const localePath = useLocalePath()
 
+// Load counts on mount (lightweight, single API call)
+onMounted(() => store.fetchCounts())
+
 const sections = [
   { key: 'workingOn' as const, icon: 'i-lucide-hammer', emptyIcon: 'i-lucide-hard-hat' },
   { key: 'created' as const, icon: 'i-lucide-pen-line', emptyIcon: 'i-lucide-file-text' },
@@ -21,12 +24,37 @@ function sectionState(key: SectionKey) {
   return store[key]
 }
 
-function sectionCount(key: SectionKey): number | null {
-  const state = sectionState(key)
-  if (!state.fetchedAt) return null
-  if (key === 'created') return store.createdTotalCount
-  return state.data.length
-}
+const sectionCounts = computed(() => {
+  const result: Record<SectionKey, number | null> = {
+    workingOn: null,
+    created: null,
+    watching: null,
+    recent: null,
+  }
+
+  for (const key of ['workingOn', 'created', 'watching', 'recent'] as SectionKey[]) {
+    const state = sectionState(key)
+
+    // Full data takes priority over counts
+    if (key === 'created' && state.fetchedAt) {
+      result[key] = store.createdTotalCount
+    }
+    else if (state.fetchedAt) {
+      result[key] = state.data.length
+    }
+    // Fall back to lightweight counts
+    else if (store.counts) {
+      if (key === 'workingOn') result[key] = store.counts.workingOn
+      else if (key === 'created') {
+        result[key] = store.createdStateFilter === 'closed'
+          ? store.counts.createdClosed
+          : store.counts.createdOpen
+      }
+    }
+  }
+
+  return result
+})
 </script>
 
 <template>
@@ -51,9 +79,13 @@ function sectionCount(key: SectionKey): number | null {
         </h2>
 
         <!-- Count badge -->
+        <USkeleton
+          v-if="store.countsLoading && sectionCounts[s.key] == null"
+          class="h-5 w-6 rounded-full"
+        />
         <UBadge
-          v-if="sectionCount(s.key) != null && sectionCount(s.key)! > 0"
-          :label="String(sectionCount(s.key))"
+          v-else-if="sectionCounts[s.key] != null && sectionCounts[s.key]! > 0"
+          :label="String(sectionCounts[s.key])"
           color="neutral"
           variant="subtle"
           size="sm"
