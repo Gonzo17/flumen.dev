@@ -78,9 +78,6 @@
         },
         "login": {
           "type": "string"
-        },
-        "forbidden": {
-          "type": "string"
         }
       },
       "additionalProperties": false
@@ -1126,6 +1123,12 @@
     "focus": {
       "type": "object",
       "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
         "workingOn": {
           "type": "object",
           "properties": {

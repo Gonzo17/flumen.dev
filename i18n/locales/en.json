@@ -23,8 +23,7 @@
   },
   "auth": {
     "loginWithGithub": "Login with GitHub",
-    "login": "Login",
-    "forbidden": "You need to log in to access this page."
+    "login": "Login"
   },
   "welcome": {
     "greeting": "Welcome to"
@@ -373,6 +372,8 @@
     "viewPr": "View PR"
   },
   "focus": {
+    "title": "Focus",
+    "description": "Your personal command center. See what needs your attention across all repositories.",
     "workingOn": {
       "title": "Working On",
       "empty": "No active work yet. Claim an issue to get started."

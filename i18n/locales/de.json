@@ -23,8 +23,7 @@
   },
   "auth": {
     "loginWithGithub": "Mit GitHub anmelden",
-    "login": "Anmelden",
-    "forbidden": "Du musst dich anmelden, um auf diese Seite zuzugreifen."
+    "login": "Anmelden"
   },
   "welcome": {
     "greeting": "Willkommen bei"
@@ -373,6 +372,8 @@
     "viewPr": "PR ansehen"
   },
   "focus": {
+    "title": "Focus",
+    "description": "Deine persönliche Kommandozentrale. Sieh auf einen Blick, was deine Aufmerksamkeit braucht.",
     "workingOn": {
       "title": "In Arbeit",
       "empty": "Noch nichts in Arbeit. Übernimm ein Issue, um loszulegen."
