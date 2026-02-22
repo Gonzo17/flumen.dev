@@ -6,13 +6,13 @@ definePageMeta({
 
 const { t } = useI18n()
 const store = useFocusStore()
-const localePath = useLocalePath()
 
 // Load counts on mount (lightweight, single API call)
 onMounted(() => store.fetchCounts())
 
 const sections = [
   { key: 'workingOn' as const, icon: 'i-lucide-hammer', emptyIcon: 'i-lucide-hard-hat' },
+  { key: 'inbox' as const, icon: 'i-lucide-inbox', emptyIcon: 'i-lucide-mail' },
   { key: 'created' as const, icon: 'i-lucide-pen-line', emptyIcon: 'i-lucide-file-text' },
   { key: 'watching' as const, icon: 'i-lucide-eye', emptyIcon: 'i-lucide-bookmark' },
   { key: 'recent' as const, icon: 'i-lucide-clock', emptyIcon: 'i-lucide-activity' },
@@ -24,25 +24,30 @@ function sectionState(key: SectionKey) {
   return store[key]
 }
 
+// Ref to InboxSection for header chip state
+const inboxSectionRef = ref<{ inboxFilter: 'active' | 'dismissed', inboxActiveCount: number, inboxDismissedCount: number } | null>(null)
+
 const sectionCounts = computed(() => {
   const result: Record<SectionKey, number | null> = {
     workingOn: null,
+    inbox: null,
     created: null,
     watching: null,
     recent: null,
   }
 
-  for (const key of ['workingOn', 'created', 'watching', 'recent'] as SectionKey[]) {
+  for (const key of ['workingOn', 'inbox', 'created', 'watching', 'recent'] as SectionKey[]) {
+    // Inbox has no total — category counts shown in sub-headers
+    if (key === 'inbox') continue
+
     const state = sectionState(key)
 
-    // Full data takes priority over counts
     if (key === 'created' && state.fetchedAt) {
       result[key] = store.createdTotalCount
     }
-    else if (state.fetchedAt) {
-      result[key] = state.data.length
+    else if (state.fetchedAt && 'data' in state) {
+      result[key] = (state.data as unknown[]).length
     }
-    // Fall back to lightweight counts
     else if (store.counts) {
       if (key === 'workingOn') result[key] = store.counts.workingOn
       else if (key === 'created') {
@@ -107,7 +112,41 @@ const sectionCounts = computed(() => {
           size="sm"
         />
 
-        <!-- Created: state filter chips (inside header, right of count) -->
+        <!-- Inbox: new indicator (before expanded) -->
+        <span
+          v-if="s.key === 'inbox' && store.counts?.inboxHasNew && store.expanded !== 'inbox'"
+          class="relative flex size-2"
+        >
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+          <span class="relative inline-flex rounded-full size-2 bg-primary" />
+        </span>
+
+        <!-- Inbox: filter chips -->
+        <template v-if="s.key === 'inbox' && store.expanded === 'inbox' && inboxSectionRef">
+          <div
+            class="flex items-center gap-1 ml-2"
+            @click.stop
+          >
+            <UBadge
+              :label="`${t('focus.inbox.active')} (${inboxSectionRef.inboxActiveCount})`"
+              :color="inboxSectionRef.inboxFilter === 'active' ? 'primary' : 'neutral'"
+              :variant="inboxSectionRef.inboxFilter === 'active' ? 'solid' : 'subtle'"
+              size="sm"
+              class="cursor-pointer"
+              @click="inboxSectionRef.inboxFilter = 'active'"
+            />
+            <UBadge
+              :label="`${t('focus.inbox.dismissed')} (${inboxSectionRef.inboxDismissedCount})`"
+              :color="inboxSectionRef.inboxFilter === 'dismissed' ? 'primary' : 'neutral'"
+              :variant="inboxSectionRef.inboxFilter === 'dismissed' ? 'solid' : 'subtle'"
+              size="sm"
+              class="cursor-pointer"
+              @click="inboxSectionRef.inboxFilter = 'dismissed'"
+            />
+          </div>
+        </template>
+
+        <!-- Created: state filter chips -->
         <template v-if="s.key === 'created' && store.expanded === 'created'">
           <div
             class="flex items-center gap-1 ml-2"
@@ -150,140 +189,14 @@ const sectionCounts = computed(() => {
         v-if="store.expanded === s.key"
         class="border-t border-default"
       >
-        <!-- Working On -->
-        <template v-if="s.key === 'workingOn'">
-          <div
-            v-if="store.workingOn.loading && !store.workingOn.data.length"
-            class="p-6 text-center"
-          >
-            <UIcon
-              name="i-lucide-loader-2"
-              class="size-6 text-dimmed mx-auto mb-2 animate-spin"
-            />
-            <p class="text-sm text-muted">
-              {{ t('common.loading') }}
-            </p>
-          </div>
+        <FocusWorkingOnSection v-if="s.key === 'workingOn'" />
 
-          <div
-            v-else-if="store.workingOn.data.length === 0"
-            class="p-6 text-center"
-          >
-            <UIcon
-              name="i-lucide-hard-hat"
-              class="size-8 text-dimmed mx-auto mb-2"
-            />
-            <p class="text-sm text-muted">
-              {{ t('focus.workingOn.empty') }}
-            </p>
-          </div>
+        <FocusInboxSection
+          v-else-if="s.key === 'inbox'"
+          ref="inboxSectionRef"
+        />
 
-          <div v-else>
-            <NuxtLink
-              v-for="item in store.workingOn.data"
-              :key="`${item.repo}#${item.number}`"
-              :to="item.type === 'issue' ? localePath({ path: `/issues/${item.number}`, query: { repo: item.repo } }) : item.url"
-              :external="item.type === 'pr'"
-              :target="item.type === 'pr' ? '_blank' : undefined"
-              class="flex items-start gap-3 px-4 py-3 hover:bg-elevated transition-colors border-b border-default last:border-b-0"
-            >
-              <UIcon
-                :name="item.type === 'issue' ? 'i-lucide-circle-dot' : 'i-lucide-git-pull-request'"
-                class="size-4 mt-0.5 shrink-0"
-                :class="item.type === 'issue' ? 'text-emerald-500' : (item.isDraft ? 'text-neutral-400' : 'text-blue-500')"
-              />
-
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2">
-                  <span class="text-sm font-medium text-highlighted truncate">
-                    {{ item.title }}
-                  </span>
-                  <span class="text-xs text-dimmed shrink-0">
-                    #{{ item.number }}
-                  </span>
-                </div>
-                <div class="flex items-center gap-2 mt-0.5">
-                  <span class="text-xs text-muted">
-                    {{ item.repo }}
-                  </span>
-                  <UBadge
-                    v-if="item.isDraft"
-                    :label="$t('repos.badge.draft')"
-                    color="neutral"
-                    variant="subtle"
-                    size="xs"
-                  />
-                  <UBadge
-                    v-for="label in item.labels.slice(0, 3)"
-                    :key="label.name"
-                    :label="label.name"
-                    :style="{ backgroundColor: `#${label.color}20`, color: `#${label.color}` }"
-                    variant="subtle"
-                    size="xs"
-                  />
-                </div>
-              </div>
-
-              <UBadge
-                v-if="item.branchName"
-                :label="item.branchName"
-                color="neutral"
-                variant="outline"
-                size="xs"
-                class="shrink-0 max-w-40 truncate"
-              />
-            </NuxtLink>
-          </div>
-        </template>
-
-        <!-- Created -->
-        <template v-else-if="s.key === 'created'">
-          <!-- Skeleton loading -->
-          <div v-if="store.created.loading && !store.created.data.length">
-            <FocusCardSkeleton
-              v-for="i in 10"
-              :key="i"
-            />
-          </div>
-
-          <!-- Empty state -->
-          <div
-            v-else-if="store.created.data.length === 0"
-            class="p-6 text-center"
-          >
-            <UIcon
-              name="i-lucide-file-text"
-              class="size-8 text-dimmed mx-auto mb-2"
-            />
-            <p class="text-sm text-muted">
-              {{ t('focus.created.empty') }}
-            </p>
-          </div>
-
-          <!-- Items + pagination -->
-          <div v-else>
-            <div
-              class="transition-opacity duration-200"
-              :class="store.createdPaging ? 'opacity-50 pointer-events-none' : ''"
-            >
-              <FocusCreatedIssueCard
-                v-for="item in store.created.data"
-                :key="item.id"
-                :item="item"
-              />
-            </div>
-
-            <UiPaginator
-              :current-page="store.createdPage"
-              :total-pages="store.createdTotalPages"
-              :has-more="store.createdHasMore"
-              :has-previous="store.createdHasPrevious"
-              :paging="store.createdPaging"
-              @next="store.createdNextPage()"
-              @previous="store.createdPrevPage()"
-            />
-          </div>
-        </template>
+        <FocusCreatedSection v-else-if="s.key === 'created'" />
 
         <!-- Watching: placeholder -->
         <template v-else-if="s.key === 'watching'">
