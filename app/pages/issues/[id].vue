@@ -1,12 +1,11 @@
 <script lang="ts" setup>
-const { t } = useI18n()
-const { loggedIn } = useUserSession()
-
 definePageMeta({
   middleware: 'auth',
   titleKey: 'nav.issues',
 })
 
+const { t } = useI18n()
+const { loggedIn } = useUserSession()
 const route = useRoute()
 const hasTeleportContent = useState('has-page-title-teleport', () => true)
 

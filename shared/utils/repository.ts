@@ -1,4 +1,4 @@
-import type { GitHubIssue, GitHubNotification, GitHubPullRequest, GitHubRepo, RepoIssue, RepoNotification, RepoPullRequest, Repository } from '../types/repository'
+import type { GitHubContributor, GitHubContent, GitHubIssue, GitHubNotification, GitHubPullRequest, GitHubRelease, GitHubRepo, GitHubRepoDetail, RepoContributor, RepoDetail, RepoFileContent, RepoIssue, RepoNotification, RepoPullRequest, RepoRelease, Repository, RepoTreeEntry } from '../types/repository'
 
 /**
  * Helper function to map a GitHub response to camelCase format
@@ -75,5 +75,72 @@ export function toRepoNotification(n: GitHubNotification): RepoNotification {
     title: n.subject.title,
     type: n.subject.type,
     subjectUrl: n.subject.url,
+  }
+}
+
+export function toRepoDetail(r: GitHubRepoDetail): RepoDetail {
+  return {
+    ...toRepository(r),
+    license: r.license ? { key: r.license.key, name: r.license.name, spdxId: r.license.spdx_id } : null,
+    subscribersCount: r.subscribers_count,
+    networkCount: r.network_count,
+    hasWiki: r.has_wiki,
+    hasPages: r.has_pages,
+    parent: r.parent ? { fullName: r.parent.full_name, htmlUrl: r.parent.html_url } : undefined,
+  }
+}
+
+export function toRepoTreeEntry(c: GitHubContent): RepoTreeEntry {
+  return {
+    name: c.name,
+    path: c.path,
+    type: c.type === 'dir' ? 'dir' : 'file',
+    size: c.size,
+  }
+}
+
+function decodeBase64Utf8(base64: string): string {
+  const normalized = base64.replace(/\n/g, '')
+
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(normalized, 'base64').toString('utf-8')
+  }
+
+  if (typeof atob !== 'undefined') {
+    const binary = atob(normalized)
+    const bytes = Uint8Array.from(binary, char => char.charCodeAt(0))
+    return new TextDecoder().decode(bytes)
+  }
+
+  return normalized
+}
+
+export function toRepoFileContent(c: GitHubContent): RepoFileContent {
+  const raw = c.content ?? ''
+  const decoded = c.encoding === 'base64'
+    ? decodeBase64Utf8(raw)
+    : raw
+  return {
+    name: c.name,
+    path: c.path,
+    content: decoded,
+    size: c.size,
+  }
+}
+
+export function toRepoRelease(r: GitHubRelease): RepoRelease {
+  return {
+    tagName: r.tag_name,
+    name: r.name ?? r.tag_name,
+    publishedAt: r.published_at,
+    htmlUrl: r.html_url,
+  }
+}
+
+export function toRepoContributor(c: GitHubContributor): RepoContributor {
+  return {
+    login: c.login,
+    avatarUrl: c.avatar_url,
+    contributions: c.contributions,
   }
 }
