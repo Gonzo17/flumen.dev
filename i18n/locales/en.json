@@ -338,6 +338,19 @@
       "collaboratorDescription": "Has been invited to collaborate",
       "contributor": "Contributor",
       "contributorDescription": "Has previously committed to this repository"
+    },
+    "profile": {
+      "followers": "Followers",
+      "following": "Following",
+      "repositories": "Public repositories",
+      "memberSince": "Member since",
+      "openOnGitHub": "Open on GitHub",
+      "errorLoading": "Could not load profile",
+      "topRepos": "Top repositories",
+      "fork": "Fork",
+      "contributions": "Contributions",
+      "contributionsTotal": "{count} contributions in the last year",
+      "contributionDay": "{count} contributions on {date}"
     }
   },
   "pinnedRepos": {
@@ -527,7 +540,11 @@
       "theme": "Theme",
       "accentColor": "Accent Color",
       "resetColor": "Reset to default",
-      "language": "Language"
+      "language": "Language",
+      "contributionSkin": "Contribution Graph Style",
+      "skinDefault": "Default",
+      "skinGrass": "Grass",
+      "skinFire": "Fire"
     }
   }
 }
