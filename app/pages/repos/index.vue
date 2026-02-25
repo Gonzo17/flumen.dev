@@ -9,7 +9,7 @@ const { user } = useUserSession()
 const { orgs } = useUserSettings()
 
 const store = useRepositoryStore()
-await store.fetchAll()
+store.fetchAll()
 
 const search = ref('')
 const sort = ref('pushed')
