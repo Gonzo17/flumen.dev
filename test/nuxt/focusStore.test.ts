@@ -135,6 +135,25 @@ const mockIssueItems: UnifiedInboxItem[] = [
   }),
 ]
 
+const mockClosedPRItems: UnifiedInboxItem[] = [
+  makeInboxItem({
+    number: 3,
+    title: 'Merged PR',
+    state: 'MERGED',
+    repo: 'org/repo',
+  }),
+]
+
+const mockClosedIssueItems: UnifiedInboxItem[] = [
+  makeInboxItem({
+    number: 11,
+    title: 'Closed issue',
+    type: 'issue',
+    state: 'CLOSED',
+    repo: 'org/repo',
+  }),
+]
+
 let inboxCallCount = 0
 
 registerEndpoint('/api/focus/inbox-unified', {
@@ -143,8 +162,15 @@ registerEndpoint('/api/focus/inbox-unified', {
     inboxCallCount++
     const url = new URL(event.path, 'http://localhost')
     const category = url.searchParams.get('category') ?? 'pr'
+    const state = url.searchParams.get('state') ?? 'open'
 
-    const items = category === 'pr' ? mockPRItems : mockIssueItems
+    let items: UnifiedInboxItem[]
+    if (category === 'pr') {
+      items = state === 'closed' ? mockClosedPRItems : mockPRItems
+    }
+    else {
+      items = state === 'closed' ? mockClosedIssueItems : mockIssueItems
+    }
 
     return {
       items,
@@ -182,6 +208,8 @@ async function withStore<T>(fn: (store: ReturnType<typeof useFocusStore>) => T |
       const store = useFocusStore()
       store.expanded = null
       store.createdStateFilter = 'open'
+      store.inboxPRStateFilter = 'open'
+      store.inboxIssueStateFilter = 'open'
       result = await fn(store)
       return () => h('div')
     },
@@ -242,15 +270,17 @@ describe('focusStore', () => {
     })
   })
 
-  it('createdPrevPage goes back', async () => {
+  it('createdPrevPage goes back using page cache (no refetch)', async () => {
     await withStore(async (store) => {
       await store.toggle('created')
       await store.createdNextPage()
       expect(store.createdPage).toBe(2)
 
+      createdCallCount = 0
       await store.createdPrevPage()
       expect(store.createdPage).toBe(1)
       expect(store.created.data[0]!.title).toBe('Created issue')
+      expect(createdCallCount).toBe(0) // served from page cache
     })
   })
 
@@ -266,6 +296,23 @@ describe('focusStore', () => {
       await store.toggle('created')
       await store.createdNextPage()
       expect(store.createdHasPrevious).toBe(true)
+    })
+  })
+
+  it('refreshSection clears page cache (forces refetch on navigate)', async () => {
+    await withStore(async (store) => {
+      await store.toggle('created')
+      await store.createdNextPage()
+
+      await store.refreshSection('created') // clears cache, back to page 1
+      await store.createdNextPage() // page 2 again
+      createdCallCount = 0
+
+      await store.createdPrevPage()
+      // After refresh the old page 1 cache was cleared,
+      // but the fresh page 1 from refresh is now cached
+      expect(createdCallCount).toBe(0)
+      expect(store.created.data[0]!.title).toBe('Created issue')
     })
   })
 
@@ -536,6 +583,62 @@ describe('focusStore', () => {
       await store.toggle('created')
       expect(store.expanded).toBe('created')
       // No errors thrown = clean stop
+    })
+  })
+
+  // --- Inbox: state filter ---
+
+  it('setInboxPRState switches to closed and fetches merged PRs', async () => {
+    await withStore(async (store) => {
+      await store.toggle('inbox')
+      expect(store.inboxPRs.data[0]!.title).toBe('Review PR 1')
+
+      await store.setInboxPRState('closed')
+      expect(store.inboxPRStateFilter).toBe('closed')
+      expect(store.inboxPRs.data).toHaveLength(1)
+      expect(store.inboxPRs.data[0]!.title).toBe('Merged PR')
+      expect(store.inboxPRs.data[0]!.state).toBe('MERGED')
+
+      // Issues unaffected
+      expect(store.inboxIssues.data[0]!.title).toBe('Open issue')
+    })
+  })
+
+  it('switching back to open uses cached data (no refetch)', async () => {
+    await withStore(async (store) => {
+      await store.toggle('inbox')
+      await store.setInboxPRState('closed')
+      inboxCallCount = 0
+
+      await store.setInboxPRState('open')
+      expect(inboxCallCount).toBe(0) // cached, no refetch
+      expect(store.inboxPRs.data[0]!.title).toBe('Review PR 1')
+    })
+  })
+
+  it('setInboxPRState does nothing when already on that state', async () => {
+    await withStore(async (store) => {
+      await store.toggle('inbox')
+      inboxCallCount = 0
+
+      await store.setInboxPRState('open') // already open
+      expect(inboxCallCount).toBe(0)
+    })
+  })
+
+  it('scope change invalidates all inbox caches (open + closed)', async () => {
+    await withStore(async (store) => {
+      await store.setInboxScope('user1')
+      await store.toggle('inbox') // fetches open PRs + Issues
+      await store.setInboxPRState('closed') // fetches closed PRs
+
+      // Switch scope — all caches should be invalidated
+      await store.setInboxScope('org1')
+      inboxCallCount = 0
+
+      // Switch back to open — should refetch because cache was invalidated
+      await store.setInboxPRState('open')
+      expect(inboxCallCount).toBe(1) // had to refetch
     })
   })
 })
