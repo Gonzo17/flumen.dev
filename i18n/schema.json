@@ -844,19 +844,13 @@
         "nextPage": {
           "type": "string"
         },
-        "serverSearch": {
-          "type": "string"
-        },
         "filter": {
           "type": "object",
           "properties": {
+            "assignedToMe": {
+              "type": "string"
+            },
             "unassigned": {
-              "type": "string"
-            },
-            "hasLinkedPr": {
-              "type": "string"
-            },
-            "noLinkedPr": {
               "type": "string"
             },
             "hasMilestone": {
