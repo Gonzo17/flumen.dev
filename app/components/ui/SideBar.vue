@@ -70,9 +70,63 @@ const isDark = computed({
 
 const { pinnedRepos, unpin, reorder } = usePinnedRepos()
 
-const { update: updateSettings } = useUserSettings()
+const { settings, update: updateSettings } = useUserSettings()
 
 const issueStore = useIssueStore()
+
+// --- Resizable pinned section ---
+const PINNED_MIN_H = 80
+const PINNED_MAX_H = 600
+const PINNED_DEFAULT_H = 220
+
+function clampHeight(h: number): number {
+  return Math.min(PINNED_MAX_H, Math.max(PINNED_MIN_H, h))
+}
+
+const pinnedHeight = ref(clampHeight(settings.value?.pinnedHeight ?? PINNED_DEFAULT_H))
+const pinnedResizing = ref(false)
+let resizeSaveTimer: ReturnType<typeof setTimeout> | null = null
+
+// Sync pinnedHeight when settings arrive asynchronously (e.g. after SSR hydration)
+watch(() => settings.value?.pinnedHeight, (h) => {
+  if (h != null && !pinnedResizing.value) pinnedHeight.value = clampHeight(h)
+})
+
+onUnmounted(() => {
+  if (resizeSaveTimer) clearTimeout(resizeSaveTimer)
+})
+
+function onPinnedResizeStart(e: PointerEvent) {
+  e.preventDefault()
+  e.stopPropagation()
+  const el = e.currentTarget as HTMLElement
+  el.setPointerCapture(e.pointerId)
+
+  pinnedResizing.value = true
+  const startY = e.clientY
+  const startH = pinnedHeight.value
+
+  function onMove(ev: PointerEvent) {
+    const delta = startY - ev.clientY
+    pinnedHeight.value = Math.min(PINNED_MAX_H, Math.max(PINNED_MIN_H, startH + delta))
+  }
+
+  function onUp() {
+    pinnedResizing.value = false
+    el.removeEventListener('pointermove', onMove)
+    el.removeEventListener('pointerup', onUp)
+    el.removeEventListener('lostpointercapture', onUp)
+
+    if (resizeSaveTimer) clearTimeout(resizeSaveTimer)
+    resizeSaveTimer = setTimeout(() => {
+      updateSettings({ pinnedHeight: pinnedHeight.value })
+    }, 500)
+  }
+
+  el.addEventListener('pointermove', onMove)
+  el.addEventListener('pointerup', onUp)
+  el.addEventListener('lostpointercapture', onUp)
+}
 
 const sidebarSearchOpen = ref(false)
 const sidebarSearchTerm = ref('')
@@ -84,6 +138,7 @@ let sidebarSearchRequestId = 0
 function selectPinnedRepo(repo: string) {
   issueStore.selectRepo(repo)
   updateSettings({ selectedRepo: repo })
+  navigateTo(localePath('/issues'))
 }
 
 function resetSidebarSearch() {
@@ -335,11 +390,50 @@ const mainItems = computed<NavigationMenuItem[]>(() => [
 
       <!-- Pinned repos -->
       <ClientOnly>
+        <!-- Collapsed: icon-only with tooltips -->
+        <nav
+          v-if="pinnedRepos.length && collapsed"
+          :aria-label="$t('pinnedRepos.pinned')"
+          class="mt-auto border-t border-default pt-2 flex flex-col items-center gap-1 overflow-y-auto max-h-80"
+        >
+          <UIcon
+            name="i-lucide-pin"
+            class="size-3.5 text-muted/50 shrink-0 mb-0.5"
+          />
+          <UTooltip
+            v-for="item in pinnedRepos"
+            :key="item.repo"
+            :text="item.repo.split('/')[1] ?? item.repo"
+            :content="{ side: 'right' }"
+          >
+            <UButton
+              :icon="item.type === 'fork' ? 'i-lucide-git-fork' : 'i-lucide-book-marked'"
+              color="neutral"
+              variant="ghost"
+              square
+              size="sm"
+              :aria-label="item.repo"
+              @click="selectPinnedRepo(item.repo)"
+            />
+          </UTooltip>
+        </nav>
+
+        <!-- Expanded: full list with drag & resize -->
         <nav
           v-if="pinnedRepos.length && !collapsed"
           :aria-label="$t('pinnedRepos.pinned')"
-          class="mt-2 border-t border-default pt-2 px-1"
+          class="mt-2 border-t border-default px-1"
         >
+          <!-- Resize handle (on divider) -->
+          <div
+            class="flex justify-center py-1 cursor-row-resize group touch-none select-none"
+            @pointerdown="onPinnedResizeStart"
+          >
+            <UIcon
+              name="i-lucide-grip-horizontal"
+              class="size-4 text-muted/50 group-hover:text-primary transition-colors"
+            />
+          </div>
           <p class="px-2 pb-1 text-xs font-semibold text-muted uppercase tracking-wide">
             {{ $t('pinnedRepos.pinned') }}
           </p>
@@ -354,7 +448,8 @@ const mainItems = computed<NavigationMenuItem[]>(() => [
           <TheFreeform
             v-model="pinnedDragItems"
             :disabled="!!pinnedSearch"
-            class="flex flex-col gap-0.5 max-h-50 overflow-y-auto"
+            class="flex flex-col gap-0.5 overflow-y-auto"
+            :style="{ height: `${pinnedHeight}px` }"
           >
             <FreeformItem
               v-for="item in filteredPinnedRepos"
@@ -371,9 +466,8 @@ const mainItems = computed<NavigationMenuItem[]>(() => [
                     name="i-lucide-grip-vertical"
                     class="size-3.5 shrink-0 text-muted/50 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
                   />
-                  <NuxtLink
-                    :to="localePath('/issues')"
-                    class="flex items-center gap-2 flex-1 min-w-0"
+                  <button
+                    class="flex items-center gap-2 flex-1 min-w-0 cursor-pointer"
                     @click="selectPinnedRepo(item.id)"
                   >
                     <UIcon
@@ -386,10 +480,11 @@ const mainItems = computed<NavigationMenuItem[]>(() => [
                       color="info"
                       variant="subtle"
                       size="xs"
+                      class="shrink-0"
                     >
                       {{ $t('repos.badge.fork') }}
                     </UBadge>
-                  </NuxtLink>
+                  </button>
                   <UTooltip :text="$t('pinnedRepos.unpin')">
                     <UButton
                       icon="i-lucide-pin-off"
@@ -398,7 +493,7 @@ const mainItems = computed<NavigationMenuItem[]>(() => [
                       variant="ghost"
                       square
                       :aria-label="$t('pinnedRepos.unpin')"
-                      class="opacity-0 group-hover:opacity-100 shrink-0"
+                      class="opacity-0 group-hover:opacity-100 shrink-0 transition-opacity"
                       @click="unpin(item.id)"
                     />
                   </UTooltip>
@@ -494,5 +589,9 @@ const mainItems = computed<NavigationMenuItem[]>(() => [
 :deep(.freeform-placeholder) {
   align-self: stretch !important;
   width: auto !important;
+}
+
+:deep(.freeform-item) {
+  width: 100%;
 }
 </style>
