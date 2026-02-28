@@ -321,7 +321,6 @@
     },
     "detail": {
       "needsOwner": "Braucht Zuständigen",
-      "noBranchYet": "Noch kein Branch",
       "claim": "Übernehmen",
       "claimTitle": "Issue übernehmen",
       "claimDescFork": "Wir forken das Repo, erstellen einen Branch und weisen dir das Issue zu.",
@@ -415,6 +414,17 @@
     },
     "filter": {
       "all": "Alle"
+    },
+    "ci": {
+      "checks": "CI-Checks",
+      "allPassed": "Alle Checks bestanden",
+      "viewLog": "Log",
+      "viewOnGithub": "Auf GitHub öffnen",
+      "failedCount": "{count} fehlgeschlagen",
+      "passedCount": "{count} bestanden",
+      "pending": "{count} laufen",
+      "loadingLogs": "Logs werden geladen...",
+      "logError": "Logs konnten nicht geladen werden."
     },
     "timeline": {
       "kind": {
