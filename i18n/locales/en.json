@@ -496,9 +496,51 @@
     "nothingToPush": "Nothing to push",
     "viewPr": "View PR"
   },
+  "dashboard": {
+    "description": "What needs your attention right now.",
+    "prHealth": {
+      "title": "PR Health",
+      "empty": "All your PRs are healthy.",
+      "summary": "{issues} issues: {ci} CI failures, {conflicts} merge conflicts",
+      "ageDays": "{days}d old",
+      "reason": {
+        "ci-failing": "CI is failing",
+        "merge-conflict": "Has merge conflicts",
+        "needs-reviewers": "No reviewers assigned",
+        "stale-draft": "Draft open for {days} days",
+        "approved-not-merged": "Approved but not merged"
+      }
+    },
+    "pulse": {
+      "title": "Weekly Pulse",
+      "empty": "No activity in your repos this week.",
+      "ratio": "{ratio}x",
+      "summary": "{resolved} resolved vs. {incoming} incoming",
+      "clearing": "Clearing backlog",
+      "keeping": "Keeping up",
+      "falling": "Backlog growing",
+      "incoming": "Incoming",
+      "resolved": "Resolved",
+      "prsMerged": "PRs merged",
+      "issuesClosed": "Issues closed",
+      "moreItems": "+{count} more"
+    }
+  },
   "focus": {
     "title": "Focus",
     "description": "Your personal command center. See what needs your attention across all repositories.",
+    "waitingOnMe": {
+      "title": "Waiting on Me",
+      "empty": "You're all caught up. No one is waiting on you.",
+      "summary": "You're blocking {people} people for an average of {days} days.",
+      "reason": {
+        "review-requested": "{login} needs your review",
+        "needs-response": "{login} is waiting for your reply",
+        "changes-requested": "{login} requested changes on your PR"
+      },
+      "waitingDays": "{days}d",
+      "loadMore": "Load more"
+    },
     "workingOn": {
       "title": "Working On",
       "empty": "No active work yet. Claim an issue to get started."

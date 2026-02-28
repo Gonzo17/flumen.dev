@@ -496,9 +496,51 @@
     "nothingToPush": "Nichts zu pushen",
     "viewPr": "PR ansehen"
   },
+  "dashboard": {
+    "description": "Was gerade deine Aufmerksamkeit braucht.",
+    "prHealth": {
+      "title": "PR-Zustand",
+      "empty": "Alle deine PRs sind gesund.",
+      "summary": "{issues} Probleme: {ci} CI-Fehler, {conflicts} Merge-Konflikte",
+      "ageDays": "{days}T alt",
+      "reason": {
+        "ci-failing": "CI schlägt fehl",
+        "merge-conflict": "Hat Merge-Konflikte",
+        "needs-reviewers": "Keine Reviewer zugewiesen",
+        "stale-draft": "Draft seit {days} Tagen offen",
+        "approved-not-merged": "Genehmigt, aber nicht gemerged"
+      }
+    },
+    "pulse": {
+      "title": "Wochenpuls",
+      "empty": "Keine Aktivität in deinen Repos diese Woche.",
+      "ratio": "{ratio}x",
+      "summary": "{resolved} erledigt vs. {incoming} eingegangen",
+      "clearing": "Rückstau wird kleiner",
+      "keeping": "Auf Kurs",
+      "falling": "Rückstau wächst",
+      "incoming": "Eingegangen",
+      "resolved": "Erledigt",
+      "prsMerged": "PRs gemerged",
+      "issuesClosed": "Issues geschlossen",
+      "moreItems": "+{count} weitere"
+    }
+  },
   "focus": {
     "title": "Focus",
     "description": "Deine persönliche Kommandozentrale. Sieh auf einen Blick, was deine Aufmerksamkeit braucht.",
+    "waitingOnMe": {
+      "title": "Wartet auf mich",
+      "empty": "Alles erledigt. Niemand wartet auf dich.",
+      "summary": "Du blockierst {people} Personen seit durchschnittlich {days} Tagen.",
+      "waitingDays": "{days}T",
+      "reason": {
+        "review-requested": "{login} braucht dein Review",
+        "needs-response": "{login} wartet auf deine Antwort",
+        "changes-requested": "{login} hat Änderungen an deinem PR angefragt"
+      },
+      "loadMore": "Mehr anzeigen"
+    },
     "workingOn": {
       "title": "In Arbeit",
       "empty": "Noch nichts in Arbeit. Übernimm ein Issue, um loszulegen."
