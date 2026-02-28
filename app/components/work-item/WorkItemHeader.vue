@@ -39,6 +39,7 @@ const [ownerRef, repoRef] = (() => {
 
 const emit = defineEmits<{
   ciStatusChanged: []
+  merged: []
 }>()
 
 const { result: checkResult, statusChanged } = useCheckRuns(ownerRef, repoRef, prNumbers)
@@ -123,6 +124,84 @@ const ciSummary = computed(() => {
   if (r.passed > 0) parts.push(t('workItems.ci.passedCount', { count: r.passed }))
   return parts.join(' \u00b7 ')
 })
+
+// --- Row 5: Merge ---
+
+const mergeExpanded = ref(false)
+const mergeStrategy = ref<'merge' | 'squash' | 'rebase'>('squash')
+const mergeTitle = ref('')
+const mergeMessage = ref('')
+const merging = ref(false)
+const justMerged = ref(false)
+
+const isPR = computed(() => props.workItem.primaryType === 'pull')
+const isPROpen = computed(() => isPR.value && props.workItem.state === 'OPEN' && !justMerged.value)
+const mergeNumber = computed(() => isPROpen.value ? props.workItem.number : null)
+const { status: mergeStatus, loading: mergeLoading, error: mergeError, fetch: fetchMergeStatus, merge: executeMerge } = useMergeStatus(ownerRef, repoRef, mergeNumber)
+
+// Lazy fetch: only when expanded for the first time
+watch(mergeExpanded, (expanded) => {
+  if (expanded && !mergeStatus.value && !mergeLoading.value) {
+    fetchMergeStatus()
+  }
+})
+
+// Sync defaults from API when loaded
+watch(mergeStatus, (ms) => {
+  if (!ms) return
+  mergeStrategy.value = ms.defaultStrategy
+  if (!mergeTitle.value) mergeTitle.value = ms.defaultTitle
+})
+
+const STRATEGY_VISUALS = {
+  merge: ['i-lucide-circle', 'i-lucide-circle', 'i-lucide-circle', 'i-lucide-git-merge', 'i-lucide-arrow-right'],
+  squash: ['i-lucide-circle', 'i-lucide-circle', 'i-lucide-circle', 'i-lucide-chevrons-right', 'i-lucide-git-commit-horizontal'],
+  rebase: ['i-lucide-arrow-right', 'i-lucide-circle', 'i-lucide-circle', 'i-lucide-circle', 'i-lucide-arrow-right'],
+} as const
+
+const mergeStrategies = computed(() => {
+  const allowed = mergeStatus.value?.allowedStrategies ?? ['merge', 'squash', 'rebase']
+  const count = mergeStatus.value?.commitCount ?? 0
+  return allowed.map((value) => {
+    const base = { value, visual: STRATEGY_VISUALS[value] }
+    switch (value) {
+      case 'merge': return { ...base, label: t('workItems.merge.keepAll'), desc: t('workItems.merge.keepAllDesc', { count }), techName: 'merge commit', icon: 'i-lucide-git-merge' }
+      case 'squash': return { ...base, label: t('workItems.merge.combineIntoOne'), desc: t('workItems.merge.combineIntoOneDesc', { count }), techName: 'squash', icon: 'i-lucide-git-commit-horizontal' }
+      case 'rebase': return { ...base, label: t('workItems.merge.replayOnTop'), desc: t('workItems.merge.replayOnTopDesc', { count }), techName: 'rebase', icon: 'i-lucide-git-branch' }
+    }
+  })
+})
+
+const activeStrategy = computed(() => mergeStrategies.value.find(s => s.value === mergeStrategy.value) ?? mergeStrategies.value[0])
+const showCommitFields = computed(() => mergeStrategy.value !== 'rebase')
+const canMerge = computed(() => mergeStatus.value?.canMerge === true)
+
+async function handleMerge() {
+  if (!canMerge.value || merging.value) return
+  merging.value = true
+  try {
+    await executeMerge(
+      mergeStrategy.value,
+      mergeStrategy.value !== 'rebase' ? mergeTitle.value : undefined,
+      mergeStrategy.value !== 'rebase' ? mergeMessage.value : undefined,
+    )
+    justMerged.value = true
+    toast.add({ title: t('workItems.merge.mergeSuccess'), color: 'success' })
+    emit('merged')
+  }
+  catch (e: unknown) {
+    const fetchErr = e as { data?: { data?: { errorKey?: string } } }
+    const errorKey = fetchErr.data?.data?.errorKey ?? 'unknown'
+    toast.add({
+      title: t('workItems.merge.mergeFailed'),
+      description: t(`workItems.merge.error.${errorKey}`),
+      color: 'error',
+    })
+  }
+  finally {
+    merging.value = false
+  }
+}
 </script>
 
 <template>
@@ -412,6 +491,196 @@ const ciSummary = computed(() => {
           </template>
         </div>
       </div>
+    </div>
+
+    <!-- Row 5: Merge (PR only) -->
+    <div
+      v-if="isPR"
+      class="border-t border-accented"
+    >
+      <!-- Already merged (locally or after refresh) -->
+      <div
+        v-if="justMerged || workItem.state === 'MERGED'"
+        class="flex items-center gap-2 px-3 sm:px-4 py-2.5"
+      >
+        <UIcon
+          name="i-lucide-git-merge"
+          class="size-3.5 shrink-0 text-violet-500"
+        />
+        <span class="text-xs text-violet-500 font-medium">{{ t('workItems.merge.mergeSuccess') }}</span>
+      </div>
+
+      <!-- Open PR: merge controls -->
+      <template v-else-if="isPROpen">
+        <!-- Collapsed: summary + merge button -->
+        <div class="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5">
+          <button
+            type="button"
+            class="flex items-center gap-2 flex-1 min-w-0 text-xs hover:bg-elevated/50 rounded-md px-1 -mx-1 py-0.5 transition-colors"
+            :aria-expanded="mergeExpanded"
+            :aria-label="t('workItems.merge.merge')"
+            @click="mergeExpanded = !mergeExpanded"
+          >
+            <UIcon
+              name="i-lucide-git-merge"
+              class="size-3.5 shrink-0"
+              :class="canMerge ? 'text-emerald-500' : 'text-muted'"
+            />
+            <span class="text-muted truncate">
+              {{ mergeLoading ? t('common.loading') : t('workItems.merge.readyToMerge') }}
+            </span>
+            <UIcon
+              :name="mergeExpanded ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+              class="size-3.5 text-muted shrink-0"
+            />
+          </button>
+
+          <UButton
+            :label="t('workItems.merge.merge')"
+            icon="i-lucide-git-merge"
+            size="xs"
+            color="primary"
+            :disabled="!canMerge || merging"
+            :loading="merging"
+            class="shrink-0"
+            @click="mergeExpanded = true"
+          />
+        </div>
+
+        <!-- Expanded: strategy picker + commit message -->
+        <div
+          v-if="mergeExpanded"
+          class="px-3 sm:px-4 pb-3 space-y-3"
+        >
+          <!-- Loading state -->
+          <div
+            v-if="mergeLoading"
+            class="flex items-center justify-center py-4 text-muted text-xs"
+          >
+            <UIcon
+              name="i-lucide-loader-2"
+              class="size-4 animate-spin mr-2"
+            />
+            {{ t('common.loading') }}
+          </div>
+
+          <!-- Error state -->
+          <div
+            v-else-if="mergeError"
+            class="flex items-center gap-2 py-3 text-xs text-red-500"
+          >
+            <UIcon
+              name="i-lucide-alert-circle"
+              class="size-4 shrink-0"
+            />
+            <span>{{ mergeError }}</span>
+            <button
+              class="text-primary hover:underline ml-auto cursor-pointer"
+              @click="fetchMergeStatus"
+            >
+              {{ t('common.retry') }}
+            </button>
+          </div>
+
+          <template v-else-if="mergeStatus">
+            <!-- Strategy cards -->
+            <div
+              class="grid gap-1.5"
+              :class="mergeStrategies.length === 1 ? 'grid-cols-1' : mergeStrategies.length === 2 ? 'grid-cols-2' : 'grid-cols-3'"
+            >
+              <button
+                v-for="strategy in mergeStrategies"
+                :key="strategy.value"
+                type="button"
+                class="group relative flex flex-col items-center gap-1 rounded-lg border px-2 py-2 transition-all duration-200"
+                :class="[
+                  mergeStrategy === strategy.value
+                    ? 'border-primary bg-primary/5 ring-1 ring-primary/30'
+                    : 'border-default hover:border-primary/40 hover:bg-elevated/50',
+                  merging ? 'pointer-events-none opacity-50' : 'cursor-pointer',
+                ]"
+                :disabled="merging"
+                @click="mergeStrategy = strategy.value"
+              >
+                <!-- Visual: mini git graph -->
+                <div class="flex items-center gap-0.5 h-4">
+                  <template
+                    v-for="(icon, i) in strategy.visual"
+                    :key="i"
+                  >
+                    <UIcon
+                      :name="icon"
+                      class="size-2.5 transition-colors duration-200"
+                      :class="mergeStrategy === strategy.value ? 'text-primary' : 'text-muted/50 group-hover:text-muted'"
+                    />
+                  </template>
+                </div>
+
+                <!-- Label -->
+                <span
+                  class="text-[11px] font-medium text-center leading-tight transition-colors duration-200"
+                  :class="mergeStrategy === strategy.value ? 'text-primary' : 'text-highlighted'"
+                >
+                  {{ strategy.label }}
+                </span>
+
+                <!-- Tech name -->
+                <span class="text-[9px] text-muted/50 uppercase tracking-wider">
+                  {{ strategy.techName }}
+                </span>
+              </button>
+            </div>
+
+            <!-- Description of selected strategy -->
+            <p
+              v-if="activeStrategy"
+              class="text-xs text-muted leading-relaxed px-0.5"
+            >
+              {{ activeStrategy.desc }}
+            </p>
+
+            <!-- Commit fields (not for rebase) -->
+            <template v-if="showCommitFields">
+              <div
+                class="space-y-2 rounded-lg border border-default bg-default/50 p-3 transition-opacity"
+                :class="merging ? 'opacity-50 pointer-events-none' : ''"
+              >
+                <UInput
+                  v-model="mergeTitle"
+                  :placeholder="t('workItems.merge.commitTitle')"
+                  size="sm"
+                  variant="none"
+                  :disabled="merging"
+                  class="font-mono text-sm"
+                />
+                <div class="border-t border-accented" />
+                <UTextarea
+                  v-model="mergeMessage"
+                  :placeholder="t('workItems.merge.commitMessage')"
+                  size="sm"
+                  variant="none"
+                  :rows="2"
+                  :disabled="merging"
+                  autoresize
+                  class="font-mono text-xs"
+                />
+              </div>
+            </template>
+
+            <!-- Merge button -->
+            <UButton
+              :label="t('workItems.merge.confirmMerge')"
+              icon="i-lucide-git-merge"
+              color="primary"
+              block
+              :disabled="!canMerge || merging"
+              :loading="merging"
+              size="md"
+              @click="handleMerge"
+            />
+          </template>
+        </div>
+      </template>
     </div>
 
     <!-- CI Log Dialog -->

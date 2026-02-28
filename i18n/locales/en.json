@@ -426,6 +426,28 @@
       "loadingLogs": "Loading logs...",
       "logError": "Could not load logs."
     },
+    "merge": {
+      "readyToMerge": "Ready to merge",
+      "merge": "Merge",
+      "keepAll": "Keep all commits",
+      "keepAllDesc": "All {count} commits are added to the base branch with a merge commit.",
+      "combineIntoOne": "Combine into one",
+      "combineIntoOneDesc": "All changes become a single, clean commit on the base branch.",
+      "replayOnTop": "Replay on top",
+      "replayOnTopDesc": "Each commit is replayed on top of the base branch. No merge commit.",
+      "commitTitle": "Commit title",
+      "commitMessage": "Additional details (optional)",
+      "confirmMerge": "Merge this pull request",
+      "mergeSuccess": "Pull request merged",
+      "mergeFailed": "Merge failed",
+      "error": {
+        "forbidden": "You don't have permission to merge this pull request",
+        "notMergeable": "This pull request cannot be merged — checks, reviews, or branch protection may be blocking it",
+        "branchModified": "The branch was modified in the meantime — please review and try again",
+        "validationFailed": "Invalid merge parameters",
+        "unknown": "An unexpected error occurred while merging"
+      }
+    },
     "timeline": {
       "kind": {
         "comment": "Comment",
