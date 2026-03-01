@@ -162,6 +162,8 @@ query($owner: String!, $repo: String!, $number: Int!) {
                 path
                 line
                 startLine
+                originalLine
+                originalStartLine
                 diffHunk
                 outdated
                 createdAt
@@ -220,6 +222,8 @@ query($owner: String!, $repo: String!, $number: Int!) {
               path
               line
               startLine
+              originalLine
+              originalStartLine
               diffHunk
               outdated
               createdAt
@@ -276,6 +280,8 @@ interface TimelineNode {
       path: string
       line: number | null
       startLine?: number | null
+      originalLine?: number | null
+      originalStartLine?: number | null
       diffHunk?: string | null
       outdated?: boolean | null
       createdAt: string
@@ -421,8 +427,8 @@ function mapPullTimeline(node: TimelineNode, pullNumber: number): WorkItemTimeli
         id: comment.id,
         databaseId: comment.databaseId ?? undefined,
         path: comment.path,
-        line: comment.line,
-        startLine: comment.startLine ?? undefined,
+        line: comment.line ?? comment.originalLine ?? null,
+        startLine: (comment.startLine ?? comment.originalStartLine) ?? undefined,
         diffHunk: comment.diffHunk ?? undefined,
         outdated: comment.outdated ?? undefined,
         body: comment.body,

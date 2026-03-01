@@ -63,7 +63,7 @@ defineProps<{
             <!-- Content -->
             <td class="py-0 pr-3 whitespace-pre">
               <span
-                v-if="diffLine.type === 'header'"
+                v-if="diffLine.type === 'header' || diffLine.type === 'meta'"
                 class="text-dimmed"
               >{{ diffLine.content }}</span>
               <span v-else>{{ diffLine.content }}</span>

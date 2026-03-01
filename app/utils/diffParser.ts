@@ -1,5 +1,5 @@
 export interface DiffLine {
-  type: 'add' | 'remove' | 'context' | 'header'
+  type: 'add' | 'remove' | 'context' | 'header' | 'meta'
   content: string
   oldLineNumber?: number
   newLineNumber?: number
@@ -30,6 +30,11 @@ export function parseDiffHunk(hunk: string): DiffLine[] {
     else if (raw.startsWith('-')) {
       lines.push({ type: 'remove', content: raw.slice(1), oldLineNumber: oldLine })
       oldLine++
+    }
+    else if (raw.startsWith('\\') || raw === '') {
+      if (raw) {
+        lines.push({ type: 'meta', content: raw })
+      }
     }
     else {
       lines.push({ type: 'context', content: raw.startsWith(' ') ? raw.slice(1) : raw, oldLineNumber: oldLine, newLineNumber: newLine })

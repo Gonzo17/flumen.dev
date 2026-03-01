@@ -8,6 +8,8 @@ export interface ReviewThreadCommentNode {
   path: string
   line: number | null
   startLine?: number | null
+  originalLine?: number | null
+  originalStartLine?: number | null
   diffHunk?: string | null
   outdated?: boolean | null
   createdAt: string
@@ -47,8 +49,8 @@ export function buildReplyMap(threads: ReviewThreadNode[]): Map<string, ReviewCo
       id: c.id,
       databaseId: c.databaseId ?? undefined,
       path: c.path,
-      line: c.line,
-      startLine: c.startLine ?? undefined,
+      line: c.line ?? c.originalLine ?? null,
+      startLine: (c.startLine ?? c.originalStartLine) ?? undefined,
       diffHunk: c.diffHunk ?? undefined,
       outdated: c.outdated ?? undefined,
       body: c.body,

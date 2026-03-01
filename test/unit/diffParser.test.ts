@@ -47,7 +47,37 @@ describe('parseDiffHunk', () => {
   })
 
   it('handles empty hunk', () => {
-    expect(parseDiffHunk('')).toEqual([{ type: 'context', content: '', oldLineNumber: 0, newLineNumber: 0 }])
+    expect(parseDiffHunk('')).toEqual([])
+  })
+
+  it('handles meta lines without advancing line numbers', () => {
+    const hunk = `@@ -1,2 +1,2 @@
+-old
++new
+\\ No newline at end of file`
+
+    const lines = parseDiffHunk(hunk)
+
+    expect(lines).toHaveLength(4)
+    expect(lines[3]).toEqual({ type: 'meta', content: '\\ No newline at end of file' })
+  })
+
+  it('does not advance line numbers for meta lines', () => {
+    const hunk = `@@ -1,2 +1,3 @@
+ keep
+-old
+\\ No newline at end of file
++new
++added`
+
+    const lines = parseDiffHunk(hunk)
+    const contextLine = lines.find(l => l.type === 'context')!
+    const addedLines = lines.filter(l => l.type === 'add')
+
+    expect(contextLine.oldLineNumber).toBe(1)
+    expect(contextLine.newLineNumber).toBe(1)
+    expect(addedLines[0]!.newLineNumber).toBe(2)
+    expect(addedLines[1]!.newLineNumber).toBe(3)
   })
 
   it('handles hunk with only additions', () => {
