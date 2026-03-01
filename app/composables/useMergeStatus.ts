@@ -27,13 +27,13 @@ export function useMergeStatus(
     }
   }
 
-  async function merge(strategy: MergeStrategy, commitTitle?: string, commitMessage?: string) {
+  async function merge(strategy: MergeStrategy, commitTitle?: string, commitMessage?: string, sha?: string) {
     if (!prNumber.value) return null
     return await $fetch(
       `/api/repository/${owner.value}/${repo.value}/pulls/${prNumber.value}/merge`,
       {
         method: 'POST',
-        body: { strategy, commitTitle, commitMessage },
+        body: { strategy, commitTitle, commitMessage, sha },
       },
     )
   }

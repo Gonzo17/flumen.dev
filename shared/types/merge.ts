@@ -13,4 +13,5 @@ export interface MergeStatusResult {
   commitCount: number
   defaultTitle: string
   defaultBody: string
+  headSha: string
 }

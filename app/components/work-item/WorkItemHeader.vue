@@ -159,8 +159,10 @@ const STRATEGY_VISUALS = {
   rebase: ['i-lucide-arrow-right', 'i-lucide-circle', 'i-lucide-circle', 'i-lucide-circle', 'i-lucide-arrow-right'],
 } as const
 
+const KNOWN_STRATEGIES = new Set<string>(['merge', 'squash', 'rebase'])
+
 const mergeStrategies = computed(() => {
-  const allowed = mergeStatus.value?.allowedStrategies ?? ['merge', 'squash', 'rebase']
+  const allowed = (mergeStatus.value?.allowedStrategies ?? ['merge', 'squash', 'rebase']).filter(v => KNOWN_STRATEGIES.has(v))
   const count = mergeStatus.value?.commitCount ?? 0
   return allowed.map((value) => {
     const base = { value, visual: STRATEGY_VISUALS[value] }
@@ -168,6 +170,7 @@ const mergeStrategies = computed(() => {
       case 'merge': return { ...base, label: t('workItems.merge.keepAll'), desc: t('workItems.merge.keepAllDesc', { count }), techName: 'merge commit', icon: 'i-lucide-git-merge' }
       case 'squash': return { ...base, label: t('workItems.merge.combineIntoOne'), desc: t('workItems.merge.combineIntoOneDesc', { count }), techName: 'squash', icon: 'i-lucide-git-commit-horizontal' }
       case 'rebase': return { ...base, label: t('workItems.merge.replayOnTop'), desc: t('workItems.merge.replayOnTopDesc', { count }), techName: 'rebase', icon: 'i-lucide-git-branch' }
+      default: return { ...base, label: value, desc: '', techName: value, icon: 'i-lucide-git-merge' }
     }
   })
 })
@@ -184,6 +187,7 @@ async function handleMerge() {
       mergeStrategy.value,
       mergeStrategy.value !== 'rebase' ? mergeTitle.value : undefined,
       mergeStrategy.value !== 'rebase' ? mergeMessage.value : undefined,
+      mergeStatus.value?.headSha,
     )
     justMerged.value = true
     toast.add({ title: t('workItems.merge.mergeSuccess'), color: 'success' })

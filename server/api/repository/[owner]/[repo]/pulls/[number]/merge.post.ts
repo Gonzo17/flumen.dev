@@ -5,6 +5,7 @@ interface MergeRequest {
   strategy: MergeStrategy
   commitTitle?: string
   commitMessage?: string
+  sha?: string
 }
 
 interface GitHubMergeResponse {
@@ -47,6 +48,9 @@ export default defineEventHandler(async (event) => {
   }
   if (body.commitMessage && body.strategy !== 'rebase') {
     mergeBody.commit_message = body.commitMessage
+  }
+  if (body.sha) {
+    mergeBody.sha = body.sha
   }
 
   try {
