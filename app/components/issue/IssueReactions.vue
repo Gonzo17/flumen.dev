@@ -4,6 +4,8 @@ const props = defineProps<{
   subjectId: string
   repo: string
   issueNumber: number
+  pullCommentId?: number
+  workItemId?: string
 }>()
 
 const emit = defineEmits<{
@@ -44,7 +46,15 @@ async function toggle(content: string, currentlyReacted: boolean) {
   try {
     await apiFetch('/api/issues/reactions', {
       method: 'POST',
-      body: { subjectId: props.subjectId, content, remove: currentlyReacted, repo: props.repo, issueNumber: props.issueNumber },
+      body: {
+        subjectId: props.subjectId,
+        content,
+        remove: currentlyReacted,
+        repo: props.repo,
+        issueNumber: props.issueNumber,
+        pullCommentId: props.pullCommentId,
+        workItemId: props.workItemId,
+      },
     })
     emit('toggle', content, !currentlyReacted)
   }

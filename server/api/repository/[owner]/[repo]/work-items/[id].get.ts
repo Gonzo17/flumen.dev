@@ -1,8 +1,10 @@
-import type { WorkItemContribution, WorkItemDetail, WorkItemTimelineEntry } from '~~/shared/types/work-item'
+import type { ReviewComment, WorkItemContribution, WorkItemDetail, WorkItemTimelineEntry } from '~~/shared/types/work-item'
 import { githubGraphQL } from '~~/server/utils/github-graphql'
 import { getRepoParams, getSessionToken } from '~~/server/utils/github'
 import { mapCiStatus } from '~~/server/utils/focus-created'
 import { parseWorkItemId } from '~~/server/utils/work-items'
+import { buildReplyMap, injectReplies, mapReactionGroups } from '~~/server/utils/review-replies'
+import type { ReviewThreadNode } from '~~/server/utils/review-replies'
 
 const ISSUE_DETAIL_QUERY = `
 query($owner: String!, $repo: String!, $number: Int!) {
@@ -152,6 +154,23 @@ query($owner: String!, $repo: String!, $number: Int!) {
               viewerHasReacted
               reactors { totalCount }
             }
+            comments(first: 50) {
+              nodes {
+                id
+                databaseId
+                body
+                path
+                line
+                createdAt
+                author { login avatarUrl }
+                replyTo { id }
+                reactionGroups {
+                  content
+                  viewerHasReacted
+                  reactors { totalCount }
+                }
+              }
+            }
           }
           ... on ClosedEvent {
             createdAt
@@ -184,6 +203,27 @@ query($owner: String!, $repo: String!, $number: Int!) {
             createdAt
             actor { login avatarUrl }
             assignee { ... on User { login } }
+          }
+        }
+      }
+      reviewThreads(first: 100) {
+        nodes {
+          id
+          comments(first: 30) {
+            nodes {
+              id
+              databaseId
+              body
+              path
+              line
+              createdAt
+              author { login avatarUrl }
+              reactionGroups {
+                content
+                viewerHasReacted
+                reactors { totalCount }
+              }
+            }
           }
         }
       }
@@ -223,6 +263,19 @@ interface TimelineNode {
   assignee?: { login?: string } | null
   source?: PullDetailNode | null
   reactionGroups?: Array<{ content: string, viewerHasReacted: boolean, reactors: { totalCount: number } }>
+  comments?: {
+    nodes?: Array<{
+      id: string
+      body: string
+      path: string
+      line: number | null
+      createdAt: string
+      author: TimelineActor | null
+      databaseId?: number | null
+      replyTo?: { id: string } | null
+      reactionGroups?: Array<{ content: string, viewerHasReacted: boolean, reactors: { totalCount: number } }>
+    }>
+  }
 }
 
 interface IssueDetailNode {
@@ -263,17 +316,8 @@ interface PullDetailNode {
   assignees?: { nodes?: Array<{ login: string, avatarUrl: string }> }
   commits?: { nodes?: Array<{ commit?: { statusCheckRollup?: { state?: string } } }> }
   timelineItems?: { nodes?: TimelineNode[] }
+  reviewThreads?: { nodes?: Array<ReviewThreadNode> }
   closingIssuesReferences: { nodes: Array<{ number: number, title: string, state: string, url: string }> }
-}
-
-function mapReactionGroups(groups: Array<{ content: string, viewerHasReacted: boolean, reactors: { totalCount: number } }> | undefined) {
-  if (!groups) return []
-
-  return groups.map(group => ({
-    content: group.content,
-    count: group.reactors?.totalCount ?? 0,
-    viewerHasReacted: group.viewerHasReacted,
-  }))
 }
 
 function normalizeAuthor(actor: TimelineActor | null | undefined) {
@@ -359,6 +403,23 @@ function mapPullTimeline(node: TimelineNode, pullNumber: number): WorkItemTimeli
   }
 
   if (node.__typename === 'PullRequestReview') {
+    const allComments = node.comments?.nodes ?? []
+
+    // Only keep root comments (no replyTo); replies are injected later via reviewThreads
+    const reviewComments: ReviewComment[] = allComments
+      .filter(comment => !comment.replyTo?.id)
+      .map(comment => ({
+        id: comment.id,
+        databaseId: comment.databaseId ?? undefined,
+        path: comment.path,
+        line: comment.line,
+        body: comment.body,
+        author: comment.author?.login ?? 'ghost',
+        authorAvatarUrl: comment.author?.avatarUrl,
+        createdAt: comment.createdAt,
+        reactionGroups: mapReactionGroups(comment.reactionGroups),
+      }))
+
     return {
       ...base,
       subjectId: node.id,
@@ -367,6 +428,7 @@ function mapPullTimeline(node: TimelineNode, pullNumber: number): WorkItemTimeli
       reactionGroups: mapReactionGroups(node.reactionGroups),
       reviewState: node.state,
       state: node.state,
+      ...(reviewComments.length > 0 ? { reviewComments } : {}),
     }
   }
 
@@ -532,12 +594,16 @@ const fetchWorkItemDetail = defineCachedFunction(
 
         pullTimelineEntries.push(createInitialPullEntry(pull))
 
-        ;(pull.timelineItems?.nodes ?? [])
+        const pullEntries = (pull.timelineItems?.nodes ?? [])
           .map((node: TimelineNode) => mapPullTimeline(node, pull.number))
           .filter((entry: WorkItemTimelineEntry | null): entry is WorkItemTimelineEntry => entry !== null)
-          .forEach((entry: WorkItemTimelineEntry) => {
-            pullTimelineEntries.push(entry)
-          })
+
+        const pullReplyMap = buildReplyMap(pull.reviewThreads?.nodes ?? [])
+        injectReplies(pullEntries, pullReplyMap)
+
+        pullEntries.forEach((entry: WorkItemTimelineEntry) => {
+          pullTimelineEntries.push(entry)
+        })
       })
 
       const issueInitialEntry = createInitialIssueEntry(issue)
@@ -598,6 +664,9 @@ const fetchWorkItemDetail = defineCachedFunction(
       .filter((entry: WorkItemTimelineEntry | null): entry is WorkItemTimelineEntry => entry !== null)
     const unifiedPullTimeline = [pullInitialEntry, ...timeline]
       .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+
+    const replyMap = buildReplyMap(pull.reviewThreads?.nodes ?? [])
+    injectReplies(unifiedPullTimeline, replyMap)
 
     const reviewSummary = unifiedPullTimeline
       .filter(item => item.kind === 'review')

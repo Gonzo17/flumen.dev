@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { TimelineItem as NuxtTimelineItem } from '@nuxt/ui'
 import type { TimelineItem as IssueTimelineItem } from '~~/shared/types/issue-detail'
-import type { WorkItemDetail, WorkItemTimelineEntry } from '~~/shared/types/work-item'
+import type { ReviewComment, WorkItemDetail, WorkItemTimelineEntry } from '~~/shared/types/work-item'
 
 definePageMeta({
   middleware: 'auth',
@@ -153,6 +153,7 @@ type WorkItemTimelineUiItem = NuxtTimelineItem & {
   subjectId?: string
   body?: string
   reactionGroups?: ReactionGroup[]
+  reviewComments?: ReviewComment[]
   kind: WorkItemTimelineEntry['kind']
   isInitial?: boolean
   authorAvatarUrl?: string
@@ -299,6 +300,7 @@ const timelineItems = computed<WorkItemTimelineUiItem[]>(() => {
     description: timelineDescription(entry),
     body: entry.body,
     reactionGroups: entry.reactionGroups,
+    reviewComments: entry.reviewComments,
     kind: entry.kind,
     isInitial: entry.isInitial,
     authorAvatarUrl: entry.authorAvatarUrl,
@@ -501,6 +503,71 @@ onBeforeUnmount(() => {
   }
 })
 
+const replyingToCommentId = ref<string | null>(null)
+const replyBody = ref('')
+const replySubmitting = ref(false)
+
+function startReply(commentId: string) {
+  replyingToCommentId.value = commentId
+  replyBody.value = ''
+}
+
+async function submitReply(reviewComment: ReviewComment, pullNumber: number) {
+  if (!replyBody.value.trim() || replySubmitting.value || !reviewComment.databaseId) return
+
+  replySubmitting.value = true
+  try {
+    const result = await $fetch('/api/pull-requests/review-comments', {
+      method: 'POST',
+      body: {
+        commentId: reviewComment.databaseId,
+        body: replyBody.value,
+        owner: owner.value,
+        repo: repoName.value,
+        pullNumber,
+        workItemId: id.value,
+      },
+    })
+
+    // Optimistically add reply
+    if (!reviewComment.replies) reviewComment.replies = []
+    reviewComment.replies.push({
+      id: result.id,
+      databaseId: result.databaseId,
+      body: result.body,
+      path: result.path,
+      line: result.line,
+      author: result.author,
+      authorAvatarUrl: result.authorAvatarUrl,
+      createdAt: result.createdAt,
+    })
+
+    replyBody.value = ''
+    replyingToCommentId.value = null
+  }
+  catch {
+    toast.add({ title: t('workItems.timeline.replyError'), color: 'error' })
+  }
+  finally {
+    replySubmitting.value = false
+  }
+}
+
+const expandedReviewComments = ref<Record<string, boolean>>({})
+
+function isReviewCommentsExpanded(item: WorkItemTimelineUiItem) {
+  const count = item.reviewComments?.length ?? 0
+  if (count === 0) return false
+  return expandedReviewComments.value[item.id] ?? count <= 3
+}
+
+function toggleReviewComments(item: WorkItemTimelineUiItem) {
+  expandedReviewComments.value = {
+    ...expandedReviewComments.value,
+    [item.id]: !isReviewCommentsExpanded(item),
+  }
+}
+
 const timelineLocalReactions = ref<Record<string, ReactionGroup[]>>({})
 
 watch(
@@ -509,14 +576,39 @@ watch(
     const next: Record<string, ReactionGroup[]> = {}
     for (const item of items) {
       next[item.id] = timelineLocalReactions.value[item.id] ?? [...(item.reactionGroups ?? [])]
+      for (const rc of item.reviewComments ?? []) {
+        next[rc.id] = timelineLocalReactions.value[rc.id] ?? [...(rc.reactionGroups ?? [])]
+        for (const reply of rc.replies ?? []) {
+          next[reply.id] = timelineLocalReactions.value[reply.id] ?? [...(reply.reactionGroups ?? [])]
+        }
+      }
     }
     timelineLocalReactions.value = next
   },
   { immediate: true },
 )
 
-function getTimelineReactions(item: WorkItemTimelineUiItem) {
-  return timelineLocalReactions.value[item.id] ?? []
+function getLocalReactions(id: string) {
+  return timelineLocalReactions.value[id] ?? []
+}
+
+function onReactionToggle(id: string, content: string, added: boolean) {
+  const reactions = [...getLocalReactions(id)]
+  const index = reactions.findIndex(r => r.content === content)
+
+  if (added && index === -1) {
+    reactions.push({ content, count: 1, viewerHasReacted: true })
+  }
+  else if (added && index >= 0) {
+    reactions[index] = { ...reactions[index]!, count: reactions[index]!.count + 1, viewerHasReacted: true }
+  }
+  else if (!added && index >= 0) {
+    const current = reactions[index]!
+    if (current.count <= 1) reactions.splice(index, 1)
+    else reactions[index] = { ...current, count: current.count - 1, viewerHasReacted: false }
+  }
+
+  timelineLocalReactions.value = { ...timelineLocalReactions.value, [id]: reactions }
 }
 
 function getTimelineSubjectId(item: WorkItemTimelineUiItem): string | undefined {
@@ -531,40 +623,6 @@ function getTimelineSubjectId(item: WorkItemTimelineUiItem): string | undefined 
   }
 
   return undefined
-}
-
-function onTimelineReactionToggle(item: WorkItemTimelineUiItem, content: string, added: boolean) {
-  const reactions = [...getTimelineReactions(item)]
-  const index = reactions.findIndex(reaction => reaction.content === content)
-
-  if (added && index === -1) {
-    reactions.push({ content, count: 1, viewerHasReacted: true })
-  }
-  else if (added && index >= 0) {
-    reactions[index] = {
-      ...reactions[index]!,
-      count: reactions[index]!.count + 1,
-      viewerHasReacted: true,
-    }
-  }
-  else if (!added && index >= 0) {
-    const current = reactions[index]!
-    if (current.count <= 1) {
-      reactions.splice(index, 1)
-    }
-    else {
-      reactions[index] = {
-        ...current,
-        count: current.count - 1,
-        viewerHasReacted: false,
-      }
-    }
-  }
-
-  timelineLocalReactions.value = {
-    ...timelineLocalReactions.value,
-    [item.id]: reactions,
-  }
 }
 </script>
 
@@ -743,13 +801,149 @@ function onTimelineReactionToggle(item: WorkItemTimelineUiItem, content: string,
 
                       <IssueReactions
                         v-if="number !== undefined && getTimelineSubjectId(item)"
-                        :reactions="getTimelineReactions(item)"
+                        :reactions="getLocalReactions(item.id)"
                         :subject-id="getTimelineSubjectId(item)!"
                         :repo="repo"
                         :issue-number="number"
+                        :work-item-id="id"
                         class="mt-3"
-                        @toggle="(content, added) => onTimelineReactionToggle(item, content, added)"
+                        @toggle="(content, added) => onReactionToggle(item.id, content, added)"
                       />
+
+                      <div
+                        v-if="item.reviewComments?.length"
+                        class="mt-3 border-t border-default pt-3"
+                      >
+                        <button
+                          type="button"
+                          class="flex items-center gap-1.5 text-sm text-muted hover:text-highlighted transition-colors"
+                          :aria-expanded="isReviewCommentsExpanded(item)"
+                          :aria-controls="`review-comments-${item.id}`"
+                          @click="toggleReviewComments(item)"
+                        >
+                          <UIcon
+                            :name="isReviewCommentsExpanded(item) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+                            class="size-4"
+                          />
+                          <span>{{ t('workItems.timeline.reviewComment', item.reviewComments.length) }}</span>
+                        </button>
+
+                        <div
+                          v-if="isReviewCommentsExpanded(item)"
+                          :id="`review-comments-${item.id}`"
+                          class="mt-2 space-y-3"
+                        >
+                          <div
+                            v-for="rc in item.reviewComments"
+                            :key="rc.id"
+                            class="rounded-md border border-default bg-elevated/50 px-3 py-2"
+                          >
+                            <div class="flex items-center gap-2 mb-1.5">
+                              <UBadge
+                                size="xs"
+                                color="neutral"
+                                variant="subtle"
+                                class="font-mono"
+                              >
+                                {{ rc.path }}{{ rc.line != null ? `:${rc.line}` : '' }}
+                              </UBadge>
+                            </div>
+                            <UiMarkdownRenderer
+                              :source="rc.body"
+                              :repo-context="repo"
+                            />
+
+                            <IssueReactions
+                              v-if="number !== undefined && rc.databaseId"
+                              :reactions="getLocalReactions(rc.id)"
+                              :subject-id="rc.id"
+                              :repo="repo"
+                              :issue-number="number"
+                              :pull-comment-id="rc.databaseId"
+                              :work-item-id="id"
+                              class="mt-2"
+                              @toggle="(content, added) => onReactionToggle(rc.id, content, added)"
+                            />
+
+                            <!-- Existing replies -->
+                            <div
+                              v-if="rc.replies?.length"
+                              class="mt-2 space-y-2 border-l-2 border-default pl-3"
+                            >
+                              <div
+                                v-for="reply in rc.replies"
+                                :key="reply.id"
+                                class="text-sm"
+                              >
+                                <span class="font-medium text-highlighted">{{ reply.author }}</span>
+                                <span class="text-dimmed text-xs ml-1">{{ timeAgo(reply.createdAt) }}</span>
+                                <UiMarkdownRenderer
+                                  :source="reply.body"
+                                  :repo-context="repo"
+                                  class="mt-0.5"
+                                />
+                                <IssueReactions
+                                  v-if="number !== undefined && reply.databaseId"
+                                  :reactions="getLocalReactions(reply.id)"
+                                  :subject-id="reply.id"
+                                  :repo="repo"
+                                  :issue-number="number"
+                                  :pull-comment-id="reply.databaseId"
+                                  :work-item-id="id"
+                                  class="mt-1"
+                                  @toggle="(content, added) => onReactionToggle(reply.id, content, added)"
+                                />
+                              </div>
+                            </div>
+
+                            <!-- Reply button & form -->
+                            <div
+                              v-if="loggedIn && rc.databaseId"
+                              class="mt-2"
+                            >
+                              <button
+                                v-if="replyingToCommentId !== rc.id"
+                                type="button"
+                                class="text-xs text-muted hover:text-highlighted transition-colors"
+                                @click="startReply(rc.id)"
+                              >
+                                {{ t('workItems.timeline.reply') }}
+                              </button>
+
+                              <div
+                                v-else
+                                class="flex flex-col gap-2"
+                              >
+                                <UTextarea
+                                  v-model="replyBody"
+                                  :placeholder="t('workItems.timeline.replyPlaceholder')"
+                                  autoresize
+                                  :rows="2"
+                                  size="sm"
+                                />
+                                <div class="flex gap-2">
+                                  <UButton
+                                    size="xs"
+                                    :loading="replySubmitting"
+                                    :disabled="!replyBody.trim()"
+                                    @click="submitReply(rc, item.sourceNumber)"
+                                  >
+                                    {{ t('workItems.timeline.reply') }}
+                                  </UButton>
+                                  <UButton
+                                    size="xs"
+                                    color="neutral"
+                                    variant="ghost"
+                                    @click="replyingToCommentId = null"
+                                  >
+                                    {{ t('common.close') }}
+                                  </UButton>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </template>
