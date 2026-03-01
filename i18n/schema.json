@@ -1285,6 +1285,72 @@
           },
           "additionalProperties": false
         },
+        "merge": {
+          "type": "object",
+          "properties": {
+            "readyToMerge": {
+              "type": "string"
+            },
+            "merge": {
+              "type": "string"
+            },
+            "keepAll": {
+              "type": "string"
+            },
+            "keepAllDesc": {
+              "type": "string"
+            },
+            "combineIntoOne": {
+              "type": "string"
+            },
+            "combineIntoOneDesc": {
+              "type": "string"
+            },
+            "replayOnTop": {
+              "type": "string"
+            },
+            "replayOnTopDesc": {
+              "type": "string"
+            },
+            "commitTitle": {
+              "type": "string"
+            },
+            "commitMessage": {
+              "type": "string"
+            },
+            "confirmMerge": {
+              "type": "string"
+            },
+            "mergeSuccess": {
+              "type": "string"
+            },
+            "mergeFailed": {
+              "type": "string"
+            },
+            "error": {
+              "type": "object",
+              "properties": {
+                "forbidden": {
+                  "type": "string"
+                },
+                "notMergeable": {
+                  "type": "string"
+                },
+                "branchModified": {
+                  "type": "string"
+                },
+                "validationFailed": {
+                  "type": "string"
+                },
+                "unknown": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
         "timeline": {
           "type": "object",
           "properties": {

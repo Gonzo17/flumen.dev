@@ -426,6 +426,28 @@
       "loadingLogs": "Logs werden geladen...",
       "logError": "Logs konnten nicht geladen werden."
     },
+    "merge": {
+      "readyToMerge": "Bereit zum Mergen",
+      "merge": "Mergen",
+      "keepAll": "Alle Commits behalten",
+      "keepAllDesc": "Alle {count} Commits werden mit einem Merge-Commit in den Zielbranch übernommen.",
+      "combineIntoOne": "Zu einem zusammenfassen",
+      "combineIntoOneDesc": "Alle Änderungen werden zu einem einzelnen, sauberen Commit auf dem Zielbranch.",
+      "replayOnTop": "Neu aufsetzen",
+      "replayOnTopDesc": "Jeder Commit wird auf den Zielbranch neu aufgesetzt. Kein Merge-Commit.",
+      "commitTitle": "Commit-Titel",
+      "commitMessage": "Weitere Details (optional)",
+      "confirmMerge": "Pull Request mergen",
+      "mergeSuccess": "Pull Request gemergt",
+      "mergeFailed": "Merge fehlgeschlagen",
+      "error": {
+        "forbidden": "Du hast keine Berechtigung, diesen Pull Request zu mergen",
+        "notMergeable": "Dieser Pull Request kann nicht gemergt werden — Checks, Reviews oder Branch-Schutzregeln blockieren den Merge",
+        "branchModified": "Der Branch wurde zwischenzeitlich geändert — bitte prüfen und erneut versuchen",
+        "validationFailed": "Ungültige Merge-Parameter",
+        "unknown": "Beim Mergen ist ein unerwarteter Fehler aufgetreten"
+      }
+    },
     "timeline": {
       "kind": {
         "comment": "Kommentar",

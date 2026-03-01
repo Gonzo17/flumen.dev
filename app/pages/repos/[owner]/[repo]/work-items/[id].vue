@@ -607,6 +607,7 @@ function onTimelineReactionToggle(item: WorkItemTimelineUiItem, content: string,
           :repo="repo"
           :issue="isIssuePrimary ? issue : undefined"
           @ci-status-changed="delayedRefreshWorkItem"
+          @merged="delayedRefreshWorkItem"
         />
 
         <div
