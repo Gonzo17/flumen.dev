@@ -56,6 +56,9 @@ export interface ReviewComment {
   databaseId?: number
   path: string
   line: number | null
+  startLine?: number | null
+  diffHunk?: string
+  outdated?: boolean
   body: string
   author: string
   authorAvatarUrl?: string

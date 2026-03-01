@@ -485,7 +485,8 @@
       "reviewComment": "{count} comment | {count} comments",
       "reply": "Reply",
       "replyPlaceholder": "Write a reply...",
-      "replyError": "Could not submit reply"
+      "replyError": "Could not submit reply",
+      "outdated": "Outdated"
     }
   },
   "user": {

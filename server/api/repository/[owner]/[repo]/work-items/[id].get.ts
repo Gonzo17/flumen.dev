@@ -161,6 +161,9 @@ query($owner: String!, $repo: String!, $number: Int!) {
                 body
                 path
                 line
+                startLine
+                diffHunk
+                outdated
                 createdAt
                 author { login avatarUrl }
                 replyTo { id }
@@ -216,6 +219,9 @@ query($owner: String!, $repo: String!, $number: Int!) {
               body
               path
               line
+              startLine
+              diffHunk
+              outdated
               createdAt
               author { login avatarUrl }
               reactionGroups {
@@ -269,6 +275,9 @@ interface TimelineNode {
       body: string
       path: string
       line: number | null
+      startLine?: number | null
+      diffHunk?: string | null
+      outdated?: boolean | null
       createdAt: string
       author: TimelineActor | null
       databaseId?: number | null
@@ -413,6 +422,9 @@ function mapPullTimeline(node: TimelineNode, pullNumber: number): WorkItemTimeli
         databaseId: comment.databaseId ?? undefined,
         path: comment.path,
         line: comment.line,
+        startLine: comment.startLine ?? undefined,
+        diffHunk: comment.diffHunk ?? undefined,
+        outdated: comment.outdated ?? undefined,
         body: comment.body,
         author: comment.author?.login ?? 'ghost',
         authorAvatarUrl: comment.author?.avatarUrl,

@@ -218,10 +218,6 @@ function timelineAction(entry: WorkItemTimelineEntry) {
   return timelineKindLabel(entry.kind)
 }
 
-function isBotAuthor(author: string) {
-  return /\[bot\]$/i.test(author)
-}
-
 function timelineDescription(entry: WorkItemTimelineEntry): string | undefined {
   if (entry.kind === 'comment' || entry.kind === 'review') {
     if (entry.body) return entry.body

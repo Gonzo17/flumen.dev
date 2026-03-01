@@ -16,18 +16,7 @@ const { t } = useI18n()
 const apiFetch = useRequestFetch()
 const pending = ref<string | null>(null)
 
-const emojiMap: Record<string, string> = {
-  THUMBS_UP: '\uD83D\uDC4D',
-  THUMBS_DOWN: '\uD83D\uDC4E',
-  LAUGH: '\uD83D\uDE04',
-  HOORAY: '\uD83C\uDF89',
-  CONFUSED: '\uD83D\uDE15',
-  HEART: '\u2764\uFE0F',
-  ROCKET: '\uD83D\uDE80',
-  EYES: '\uD83D\uDC40',
-}
-
-const allEmojis = Object.keys(emojiMap)
+const allEmojis = Object.keys(reactionEmojiMap)
 
 const visibleReactions = computed(() =>
   props.reactions.filter(r => r.count > 0),
@@ -79,7 +68,7 @@ async function toggle(content: string, currentlyReacted: boolean) {
       :disabled="pending === reaction.content"
       @click="toggle(reaction.content, reaction.viewerHasReacted)"
     >
-      {{ emojiMap[reaction.content] ?? reaction.content }}
+      {{ reactionEmojiMap[reaction.content] ?? reaction.content }}
       <span :class="reaction.viewerHasReacted ? 'text-primary' : 'text-muted'">{{ reaction.count }}</span>
     </button>
 
@@ -101,7 +90,7 @@ async function toggle(content: string, currentlyReacted: boolean) {
             :disabled="pending === emoji"
             @click="toggle(emoji, false)"
           >
-            {{ emojiMap[emoji] }}
+            {{ reactionEmojiMap[emoji] }}
           </button>
         </div>
       </template>

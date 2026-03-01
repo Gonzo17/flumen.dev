@@ -485,7 +485,8 @@
       "reviewComment": "{count} Kommentar | {count} Kommentare",
       "reply": "Antworten",
       "replyPlaceholder": "Antwort schreiben...",
-      "replyError": "Antwort konnte nicht gesendet werden"
+      "replyError": "Antwort konnte nicht gesendet werden",
+      "outdated": "Veraltet"
     }
   },
   "user": {
