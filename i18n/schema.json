@@ -1464,6 +1464,9 @@
             },
             "replyError": {
               "type": "string"
+            },
+            "outdated": {
+              "type": "string"
             }
           },
           "additionalProperties": false

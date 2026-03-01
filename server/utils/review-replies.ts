@@ -7,6 +7,11 @@ export interface ReviewThreadCommentNode {
   body: string
   path: string
   line: number | null
+  startLine?: number | null
+  originalLine?: number | null
+  originalStartLine?: number | null
+  diffHunk?: string | null
+  outdated?: boolean | null
   createdAt: string
   author: { login?: string, avatarUrl?: string } | null
   reactionGroups?: Array<{ content: string, viewerHasReacted: boolean, reactors: { totalCount: number } }>
@@ -44,7 +49,10 @@ export function buildReplyMap(threads: ReviewThreadNode[]): Map<string, ReviewCo
       id: c.id,
       databaseId: c.databaseId ?? undefined,
       path: c.path,
-      line: c.line,
+      line: c.line ?? c.originalLine ?? null,
+      startLine: (c.startLine ?? c.originalStartLine) ?? undefined,
+      diffHunk: c.diffHunk ?? undefined,
+      outdated: c.outdated ?? undefined,
       body: c.body,
       author: c.author?.login ?? 'ghost',
       authorAvatarUrl: c.author?.avatarUrl,

@@ -34,25 +34,40 @@ const replyModel = computed({
   set: (v: string) => emit('update:replyBody', v),
 })
 
-function isBotAuthor(author: string) {
-  return /\[bot\]$/i.test(author)
-}
-
 const hoveredReplyId = ref<string | null>(null)
 </script>
 
 <template>
-  <div class="rounded-md border border-default bg-elevated/50 px-3 py-2">
+  <div
+    class="rounded-md border border-default bg-elevated/50 px-3 py-2"
+    :class="comment.outdated ? 'opacity-70' : ''"
+  >
     <div class="flex items-center gap-2 mb-1.5">
       <UBadge
-        size="xs"
+        size="sm"
         color="neutral"
         variant="subtle"
         class="font-mono"
       >
         {{ comment.path }}{{ comment.line != null ? `:${comment.line}` : '' }}
       </UBadge>
+      <UBadge
+        v-if="comment.outdated"
+        size="xs"
+        color="warning"
+        variant="soft"
+      >
+        {{ t('workItems.timeline.outdated') }}
+      </UBadge>
     </div>
+
+    <TimelineDiffHunkViewer
+      v-if="comment.diffHunk"
+      :diff-hunk="comment.diffHunk"
+      :path="comment.path"
+      :outdated="comment.outdated"
+      class="mb-2"
+    />
 
     <UiMarkdownRenderer
       :source="comment.body"

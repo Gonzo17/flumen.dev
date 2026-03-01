@@ -17,14 +17,12 @@ const apiFetch = useRequestFetch()
 const toast = useToast()
 const pending = ref<string | null>(null)
 
-const quickEmojis: { key: string, emoji: string, label: string }[] = [
-  { key: 'THUMBS_UP', emoji: '\uD83D\uDC4D', label: 'thumbs up' },
-  { key: 'THUMBS_DOWN', emoji: '\uD83D\uDC4E', label: 'thumbs down' },
-  { key: 'LAUGH', emoji: '\uD83D\uDE04', label: 'laugh' },
-  { key: 'HOORAY', emoji: '\uD83C\uDF89', label: 'hooray' },
-  { key: 'HEART', emoji: '\u2764\uFE0F', label: 'heart' },
-  { key: 'ROCKET', emoji: '\uD83D\uDE80', label: 'rocket' },
-]
+const quickEmojiKeys = ['THUMBS_UP', 'THUMBS_DOWN', 'LAUGH', 'HOORAY', 'HEART', 'ROCKET'] as const
+const quickEmojis = quickEmojiKeys.map(key => ({
+  key,
+  emoji: reactionEmojiMap[key]!,
+  label: reactionEmojiLabels[key]!,
+}))
 
 function isReacted(key: string) {
   return props.reactions?.some(r => r.content === key && r.viewerHasReacted) ?? false
