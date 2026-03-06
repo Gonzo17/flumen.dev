@@ -78,6 +78,12 @@ query($owner: String!, $repo: String!, $number: Int!) {
             createdAt
             source {
               __typename
+              ... on Issue {
+                number
+                title
+                state
+                url
+              }
               ... on PullRequest {
                 number
                 title

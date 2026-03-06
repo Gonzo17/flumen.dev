@@ -476,6 +476,10 @@
         "state": "State",
         "assignment": "Assignment",
         "label": "Label",
+        "crossReference": "Cross-reference",
+        "milestone": "Milestone",
+        "rename": "Rename",
+        "reference": "Reference",
         "event": "Event"
       },
       "action": {

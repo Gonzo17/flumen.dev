@@ -153,6 +153,10 @@ function timelineKindLabel(kind: string) {
   if (kind === 'state') return t('workItems.timeline.kind.state')
   if (kind === 'assignment') return t('workItems.timeline.kind.assignment')
   if (kind === 'label') return t('workItems.timeline.kind.label')
+  if (kind === 'cross-reference') return t('workItems.timeline.kind.crossReference')
+  if (kind === 'milestone') return t('workItems.timeline.kind.milestone')
+  if (kind === 'rename') return t('workItems.timeline.kind.rename')
+  if (kind === 'reference') return t('workItems.timeline.kind.reference')
   return t('workItems.timeline.kind.event')
 }
 

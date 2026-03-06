@@ -476,6 +476,10 @@
         "state": "Status",
         "assignment": "Zuweisung",
         "label": "Label",
+        "crossReference": "Querverweis",
+        "milestone": "Meilenstein",
+        "rename": "Umbenennung",
+        "reference": "Referenz",
         "event": "Ereignis"
       },
       "action": {
