@@ -176,6 +176,12 @@ type WorkItemTimelineUiItem = NuxtTimelineItem & {
   reviewState?: 'APPROVED' | 'CHANGES_REQUESTED' | 'COMMENTED' | 'DISMISSED' | 'PENDING'
   viewerCanUpdate?: boolean
   viewerCanDelete?: boolean
+  crossRefSource?: WorkItemTimelineEntry['crossRefSource']
+  milestoneTitle?: string
+  previousTitle?: string
+  currentTitle?: string
+  commitId?: string
+  commitMessage?: string
 }
 
 type TimelineRailEntry = {
@@ -204,6 +210,10 @@ function timelineIcon(entry: WorkItemTimelineEntry) {
   }
   if (entry.kind === 'assignment') return 'i-lucide-user-plus'
   if (entry.kind === 'label') return 'i-lucide-tag'
+  if (entry.kind === 'cross-reference') return 'i-lucide-arrow-up-right'
+  if (entry.kind === 'milestone') return 'i-lucide-milestone'
+  if (entry.kind === 'rename') return 'i-lucide-pencil'
+  if (entry.kind === 'reference') return 'i-lucide-git-commit-horizontal'
   return 'i-lucide-history'
 }
 
@@ -299,6 +309,44 @@ function toIssueEvent(entry: WorkItemTimelineEntry): IssueNonCommentEvent | null
     }
   }
 
+  if (entry.kind === 'cross-reference' && entry.crossRefSource) {
+    return {
+      type: 'CrossReferencedEvent',
+      actor: entry.author,
+      createdAt: entry.createdAt,
+      source: entry.crossRefSource,
+    }
+  }
+
+  if (entry.kind === 'milestone' && entry.milestoneTitle) {
+    return {
+      type: 'MilestonedEvent',
+      actor: entry.author,
+      createdAt: entry.createdAt,
+      milestoneTitle: entry.milestoneTitle,
+    }
+  }
+
+  if (entry.kind === 'rename' && entry.previousTitle && entry.currentTitle) {
+    return {
+      type: 'RenamedTitleEvent',
+      actor: entry.author,
+      createdAt: entry.createdAt,
+      previousTitle: entry.previousTitle,
+      currentTitle: entry.currentTitle,
+    }
+  }
+
+  if (entry.kind === 'reference' && entry.commitId && entry.commitMessage) {
+    return {
+      type: 'ReferencedEvent',
+      actor: entry.author,
+      createdAt: entry.createdAt,
+      commitId: entry.commitId,
+      commitMessage: entry.commitMessage,
+    }
+  }
+
   return null
 }
 
@@ -323,6 +371,12 @@ const timelineItems = computed<WorkItemTimelineUiItem[]>(() => {
     issueEvent: toIssueEvent(entry) ?? undefined,
     viewerCanUpdate: entry.viewerCanUpdate,
     viewerCanDelete: entry.viewerCanDelete,
+    crossRefSource: entry.crossRefSource,
+    milestoneTitle: entry.milestoneTitle,
+    previousTitle: entry.previousTitle,
+    currentTitle: entry.currentTitle,
+    commitId: entry.commitId,
+    commitMessage: entry.commitMessage,
     ui: entry.source === 'pull'
       ? {
           item: 'flex-row-reverse',
@@ -675,6 +729,12 @@ function handleSaveEdit(item: WorkItemTimelineUiItem, body: string) {
   })
 }
 
+function handleTaskToggle(item: WorkItemTimelineUiItem, { taskIndex }: TaskToggleDetail) {
+  if (!item.body) return
+  const toggledBody = toggleTaskInMarkdown(item.body, taskIndex)
+  handleSaveEdit(item, toggledBody)
+}
+
 function handleDelete(item: WorkItemTimelineUiItem) {
   const subjectId = getTimelineSubjectId(item)
   if (!subjectId) return
@@ -805,12 +865,17 @@ function handleDelete(item: WorkItemTimelineUiItem) {
                 <template #title="{ item }">
                   <div
                     :id="timelineDomId(item.id)"
-                    class="rounded-md px-1 py-0.5 transition-colors duration-700 w-fit"
+                    class="relative rounded-md px-1 py-0.5 transition-colors duration-700 w-fit"
                     :class="[
                       item.source === 'pull' ? 'justify-self-end' : '',
                       flashTimelineTargetId === timelineDomId(item.id) ? 'bg-primary/10 ring-1 ring-primary/40' : '',
                     ]"
                   >
+                    <span
+                      v-if="getTimelineSubjectId(item) && (item.kind === 'comment' || item.kind === 'review')"
+                      :id="'comment-' + getTimelineSubjectId(item)"
+                      class="absolute"
+                    />
                     <template v-if="item.kind === 'comment' || item.kind === 'review'" />
 
                     <div
@@ -866,7 +931,9 @@ function handleDelete(item: WorkItemTimelineUiItem) {
                     :viewer-can-update="item.viewerCanUpdate"
                     :viewer-can-delete="item.viewerCanDelete"
                     :is-editing="editingTimelineId === item.id"
+                    :viewer-can-toggle-tasks="item.viewerCanUpdate && item.isInitial"
                     :edit-disabled="editingTimelineId !== null && editingTimelineId !== item.id"
+                    @task-toggle="(detail) => handleTaskToggle(item, detail)"
                     @reaction-toggle="(content, added) => onReactionToggle(item.id, content, added)"
                     @start-edit="handleStartEdit(item)"
                     @cancel-edit="cancelEdit"
