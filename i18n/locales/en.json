@@ -737,6 +737,15 @@
       "dismissSelected": "Dismiss selected",
       "restoreSelected": "Restore selected",
       "clearSelection": "Clear",
+      "summary": {
+        "prs": "{count} PR | {count} PRs",
+        "issues": "{count} issue | {count} issues",
+        "oldest": "oldest {days}d",
+        "ciFailing": "{count} CI failing",
+        "ciPending": "{count} CI pending",
+        "changesRequested": "{count} changes requested",
+        "conflicts": "{count} conflict | {count} conflicts"
+      },
       "shortcuts": {
         "title": "Keyboard Shortcuts",
         "next": "Next item",
