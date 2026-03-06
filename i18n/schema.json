@@ -2218,6 +2218,33 @@
             "clearSelection": {
               "type": "string"
             },
+            "summary": {
+              "type": "object",
+              "properties": {
+                "prs": {
+                  "type": "string"
+                },
+                "issues": {
+                  "type": "string"
+                },
+                "oldest": {
+                  "type": "string"
+                },
+                "ciFailing": {
+                  "type": "string"
+                },
+                "ciPending": {
+                  "type": "string"
+                },
+                "changesRequested": {
+                  "type": "string"
+                },
+                "conflicts": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            },
             "shortcuts": {
               "type": "object",
               "properties": {

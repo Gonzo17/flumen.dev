@@ -202,6 +202,9 @@ onUnmounted(() => window.removeEventListener('keydown', onQuestionMark))
       </button>
     </div>
 
+    <!-- Summary stats -->
+    <FocusInboxSummary />
+
     <!-- Batch action bar -->
     <div
       v-if="store.selectedKeys.size > 0"

@@ -737,6 +737,15 @@
       "dismissSelected": "Auswahl ausblenden",
       "restoreSelected": "Auswahl wiederherstellen",
       "clearSelection": "Aufheben",
+      "summary": {
+        "prs": "{count} PR | {count} PRs",
+        "issues": "{count} Issue | {count} Issues",
+        "oldest": "ältester {days}T",
+        "ciFailing": "{count} CI fehlgeschlagen",
+        "ciPending": "{count} CI ausstehend",
+        "changesRequested": "{count} Änderungen angefragt",
+        "conflicts": "{count} Konflikt | {count} Konflikte"
+      },
       "shortcuts": {
         "title": "Tastenkürzel",
         "next": "Nächstes Element",
