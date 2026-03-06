@@ -19,6 +19,7 @@ const props = defineProps<{
   workItemId?: string
   viewerCanUpdate?: boolean
   viewerCanDelete?: boolean
+  viewerCanToggleTasks?: boolean
   isEditing?: boolean
   editDisabled?: boolean
 }>()
@@ -29,6 +30,7 @@ const emit = defineEmits<{
   cancelEdit: []
   saveEdit: [body: string]
   delete: []
+  taskToggle: [detail: TaskToggleDetail]
 }>()
 
 const { t } = useI18n()
@@ -179,6 +181,8 @@ const hasActions = computed(() => {
             v-if="body"
             :source="body"
             :repo-context="repoContext"
+            :interactive-tasks="viewerCanToggleTasks && !isEditing"
+            @task-toggle="(detail) => emit('taskToggle', detail)"
           />
           <span
             v-else-if="fallbackDescription"

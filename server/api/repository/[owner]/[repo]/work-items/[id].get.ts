@@ -78,6 +78,12 @@ query($owner: String!, $repo: String!, $number: Int!) {
             createdAt
             source {
               __typename
+              ... on Issue {
+                number
+                title
+                state
+                url
+              }
               ... on PullRequest {
                 number
                 title
@@ -97,6 +103,22 @@ query($owner: String!, $repo: String!, $number: Int!) {
                 }
               }
             }
+          }
+          ... on MilestonedEvent {
+            createdAt
+            actor { login avatarUrl }
+            milestoneTitle
+          }
+          ... on RenamedTitleEvent {
+            createdAt
+            actor { login avatarUrl }
+            previousTitle
+            currentTitle
+          }
+          ... on ReferencedEvent {
+            createdAt
+            actor { login avatarUrl }
+            commit { oid message }
           }
         }
       }
@@ -221,6 +243,41 @@ query($owner: String!, $repo: String!, $number: Int!) {
             actor { login avatarUrl }
             assignee { ... on User { login } }
           }
+          ... on CrossReferencedEvent {
+            id
+            createdAt
+            source {
+              __typename
+              ... on PullRequest {
+                number
+                title
+                state
+                url
+              }
+              ... on Issue {
+                number
+                title
+                state
+                url
+              }
+            }
+          }
+          ... on MilestonedEvent {
+            createdAt
+            actor { login avatarUrl }
+            milestoneTitle
+          }
+          ... on RenamedTitleEvent {
+            createdAt
+            actor { login avatarUrl }
+            previousTitle
+            currentTitle
+          }
+          ... on ReferencedEvent {
+            createdAt
+            actor { login avatarUrl }
+            commit { oid message }
+          }
         }
       }
       reviewThreads(first: 100) {
@@ -299,7 +356,11 @@ interface TimelineNode {
   actor?: TimelineActor | null
   label?: { name?: string } | null
   assignee?: { login?: string } | null
-  source?: PullDetailNode | null
+  source?: (PullDetailNode | { __typename?: string, number: number, title: string, state: string, url: string }) | null
+  milestoneTitle?: string
+  previousTitle?: string
+  currentTitle?: string
+  commit?: { oid: string, message: string } | null
   viewerCanUpdate?: boolean
   viewerCanDelete?: boolean
   reactionGroups?: Array<{ content: string, viewerHasReacted: boolean, reactors: { totalCount: number } }>
@@ -380,19 +441,21 @@ function normalizeAuthor(actor: TimelineActor | null | undefined) {
   }
 }
 
-function mapIssueTimeline(node: TimelineNode, issueNumber: number): WorkItemTimelineEntry | null {
-  const createdAt = node.createdAt
-  if (!createdAt) return null
+type TimelineBase = ReturnType<typeof buildTimelineBase>
 
-  const base = {
-    id: `${issueNumber}-${node.__typename}-${node.id ?? node.createdAt}`,
-    source: 'issue' as const,
-    sourceNumber: issueNumber,
+function buildTimelineBase(node: TimelineNode, source: 'issue' | 'pull', sourceNumber: number) {
+  const createdAt = node.createdAt ?? node.submittedAt
+  return {
+    id: `${sourceNumber}-${node.__typename}-${node.id ?? createdAt}`,
+    source,
+    sourceNumber,
     author: node.author?.login ?? node.actor?.login ?? 'ghost',
     authorAvatarUrl: node.author?.avatarUrl ?? node.actor?.avatarUrl,
-    createdAt,
+    createdAt: createdAt!,
   }
+}
 
+function mapSharedTimelineEvents(node: TimelineNode, base: TimelineBase): WorkItemTimelineEntry | null {
   if (node.__typename === 'IssueComment') {
     return {
       ...base,
@@ -423,6 +486,56 @@ function mapIssueTimeline(node: TimelineNode, issueNumber: number): WorkItemTime
     }
   }
 
+  if (node.__typename === 'CrossReferencedEvent' && node.source) {
+    return {
+      ...base,
+      kind: 'cross-reference',
+      crossRefSource: {
+        type: node.source.__typename === 'PullRequest' ? 'PullRequest' : 'Issue',
+        number: node.source.number,
+        title: node.source.title,
+        url: node.source.url,
+        state: node.source.state,
+      },
+    }
+  }
+
+  if (node.__typename === 'MilestonedEvent') {
+    return {
+      ...base,
+      kind: 'milestone',
+      milestoneTitle: node.milestoneTitle,
+    }
+  }
+
+  if (node.__typename === 'RenamedTitleEvent') {
+    return {
+      ...base,
+      kind: 'rename',
+      previousTitle: node.previousTitle,
+      currentTitle: node.currentTitle,
+    }
+  }
+
+  if (node.__typename === 'ReferencedEvent' && node.commit) {
+    return {
+      ...base,
+      kind: 'reference',
+      commitId: node.commit.oid,
+      commitMessage: node.commit.message,
+    }
+  }
+
+  return null
+}
+
+function mapIssueTimeline(node: TimelineNode, issueNumber: number): WorkItemTimelineEntry | null {
+  if (!node.createdAt) return null
+  const base = buildTimelineBase(node, 'issue', issueNumber)
+
+  const shared = mapSharedTimelineEvents(node, base)
+  if (shared) return shared
+
   if (node.__typename === 'ClosedEvent' || node.__typename === 'ReopenedEvent') {
     return {
       ...base,
@@ -437,27 +550,10 @@ function mapIssueTimeline(node: TimelineNode, issueNumber: number): WorkItemTime
 function mapPullTimeline(node: TimelineNode, pullNumber: number): WorkItemTimelineEntry | null {
   const createdAt = node.createdAt ?? node.submittedAt
   if (!createdAt) return null
+  const base = buildTimelineBase(node, 'pull', pullNumber)
 
-  const base = {
-    id: `${pullNumber}-${node.__typename}-${node.id ?? createdAt}`,
-    source: 'pull' as const,
-    sourceNumber: pullNumber,
-    author: node.author?.login ?? node.actor?.login ?? 'ghost',
-    authorAvatarUrl: node.author?.avatarUrl ?? node.actor?.avatarUrl,
-    createdAt,
-  }
-
-  if (node.__typename === 'IssueComment') {
-    return {
-      ...base,
-      subjectId: node.id,
-      kind: 'comment',
-      body: node.body,
-      reactionGroups: mapReactionGroups(node.reactionGroups),
-      viewerCanUpdate: node.viewerCanUpdate,
-      viewerCanDelete: node.viewerCanDelete,
-    }
-  }
+  const shared = mapSharedTimelineEvents(node, base)
+  if (shared) return shared
 
   if (node.__typename === 'PullRequestReview') {
     const allComments = node.comments?.nodes ?? []
@@ -503,24 +599,6 @@ function mapPullTimeline(node: TimelineNode, pullNumber: number): WorkItemTimeli
         : node.__typename === 'ClosedEvent'
           ? 'CLOSED'
           : 'REOPENED',
-    }
-  }
-
-  if (node.__typename === 'LabeledEvent' || node.__typename === 'UnlabeledEvent') {
-    return {
-      ...base,
-      kind: 'label',
-      labelName: node.label?.name,
-      state: node.__typename === 'LabeledEvent' ? 'LABELED' : 'UNLABELED',
-    }
-  }
-
-  if (node.__typename === 'AssignedEvent' || node.__typename === 'UnassignedEvent') {
-    return {
-      ...base,
-      kind: 'assignment',
-      assignee: node.assignee?.login,
-      state: node.__typename === 'AssignedEvent' ? 'ASSIGNED' : 'UNASSIGNED',
     }
   }
 
@@ -611,7 +689,7 @@ const fetchWorkItemDetail = defineCachedFunction(
       const linkedPulls = issue.timelineItems.nodes
         .filter((node) => {
           if (node.__typename !== 'CrossReferencedEvent' || node.source?.__typename !== 'PullRequest') return false
-          const closingIssues = node.source?.closingIssuesReferences?.nodes ?? []
+          const closingIssues = (node.source as PullDetailNode)?.closingIssuesReferences?.nodes ?? []
           return closingIssues.some((linkedIssue: { number: number }) => linkedIssue.number === issue.number)
         })
       const linkedPullMap = new Map<number, {
@@ -624,7 +702,7 @@ const fetchWorkItemDetail = defineCachedFunction(
       }>()
 
       linkedPulls.forEach((node) => {
-        const pull = node.source
+        const pull = node.source as PullDetailNode | null
         if (!pull) return
 
         if (!linkedPullMap.has(pull.number)) {

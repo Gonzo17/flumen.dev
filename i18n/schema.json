@@ -1435,6 +1435,18 @@
                 "label": {
                   "type": "string"
                 },
+                "crossReference": {
+                  "type": "string"
+                },
+                "milestone": {
+                  "type": "string"
+                },
+                "rename": {
+                  "type": "string"
+                },
+                "reference": {
+                  "type": "string"
+                },
                 "event": {
                   "type": "string"
                 }

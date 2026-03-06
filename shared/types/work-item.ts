@@ -70,7 +70,7 @@ export interface ReviewComment {
 }
 
 export type WorkItemTimelineSource = 'issue' | 'pull'
-export type WorkItemTimelineKind = 'comment' | 'review' | 'state' | 'assignment' | 'label' | 'event'
+export type WorkItemTimelineKind = 'comment' | 'review' | 'state' | 'assignment' | 'label' | 'event' | 'milestone' | 'rename' | 'reference' | 'cross-reference'
 
 export interface WorkItemTimelineEntry {
   id: string
@@ -91,6 +91,18 @@ export interface WorkItemTimelineEntry {
   reviewComments?: ReviewComment[]
   viewerCanUpdate?: boolean
   viewerCanDelete?: boolean
+  milestoneTitle?: string
+  previousTitle?: string
+  currentTitle?: string
+  commitId?: string
+  commitMessage?: string
+  crossRefSource?: {
+    type: 'PullRequest' | 'Issue'
+    number: number
+    title: string
+    url: string
+    state: string
+  }
 }
 
 export type ReviewerState = 'APPROVED' | 'CHANGES_REQUESTED' | 'COMMENTED' | 'DISMISSED' | 'PENDING'
