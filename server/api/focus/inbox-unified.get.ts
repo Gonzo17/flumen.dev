@@ -2,6 +2,7 @@ import type { GQLInboxPR, GQLInboxIssue } from '~~/server/utils/focus-inbox'
 import type { PageInfo } from '~~/shared/types/pagination'
 import type { UnifiedInboxItem } from '~~/shared/types/inbox'
 import { mapPRNode, mapIssueNode } from '~~/server/utils/focus-inbox'
+import { applySortToPage } from '~~/shared/utils/inboxSort'
 
 const PR_FIELDS = /* GraphQL */ `
   number title state url updatedAt isDraft
@@ -54,6 +55,14 @@ function buildPageQuery(category: 'pr' | 'issue'): string {
   `
 }
 
+type SearchResult = {
+  search: {
+    issueCount: number
+    pageInfo: { hasNextPage: boolean, endCursor: string | null }
+    nodes: Array<(GQLInboxPR | GQLInboxIssue) | null>
+  }
+}
+
 export default defineEventHandler(async (event) => {
   const { token, login } = await getSessionToken(event)
 
@@ -65,30 +74,26 @@ export default defineEventHandler(async (event) => {
   const repo = (query.repo as string) || ''
   const search = (query.search as string) || ''
   const state = (query.state as string) === 'closed' ? 'closed' : 'open'
+  const sort = (query.sort as string) || 'updated'
 
   // Build search query
   const scopeQualifier = repo
     ? `repo:${repo}`
     : scope === login ? `user:${login}` : `org:${scope}`
   const typeQualifier = category === 'pr' ? 'is:pr' : 'is:issue'
-  // For PRs, "closed" means merged; for issues, use is:closed
   const stateQualifier = state === 'closed'
     ? (category === 'pr' ? 'is:merged' : 'is:closed')
     : 'is:open'
   const parts = [`${typeQualifier} ${stateQualifier} ${scopeQualifier}`]
   if (search) parts.push(search)
-  parts.push('sort:updated-desc')
+
+  // GitHub-native sort: age → oldest created first, everything else → recently updated
+  parts.push(sort === 'age' ? 'sort:created-asc' : 'sort:updated-desc')
   const searchQ = parts.join(' ')
 
-  // Fetch one page
+  // Fetch one page from GitHub
   const pageQuery = buildPageQuery(category)
-  const data = await githubGraphQL<{
-    search: {
-      issueCount: number
-      pageInfo: { hasNextPage: boolean, endCursor: string | null }
-      nodes: Array<(GQLInboxPR | GQLInboxIssue) | null>
-    }
-  }>(token, pageQuery, {
+  const data = await githubGraphQL<SearchResult>(token, pageQuery, {
     q: searchQ,
     first: pageSize,
     after,
@@ -100,6 +105,9 @@ export default defineEventHandler(async (event) => {
       ? mapPRNode(n as GQLInboxPR)
       : mapIssueNode(n as GQLInboxIssue),
     )
+
+  // Re-sort the page for urgency/reviewState
+  applySortToPage(items, sort)
 
   const pageInfo: PageInfo = {
     hasNextPage: data.search.pageInfo.hasNextPage,
