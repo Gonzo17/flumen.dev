@@ -10,7 +10,11 @@
     "viewOnGithub": "View on GitHub",
     "close": "Close",
     "cancel": "Cancel",
-    "bot": "Bot"
+    "bot": "Bot",
+    "filterLabels": "Filter labels...",
+    "noLabelsAvailable": "No labels available",
+    "error": "Error",
+    "removeItem": "Remove {item}"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -720,6 +724,8 @@
       "linkedPRs": "Linked PRs",
       "reviewers": "Reviewers",
       "assigneesLabel": "Assignees",
+      "assignMe": "Assign to me",
+      "unassignMe": "Unassign me",
       "new": "new",
       "searchPlaceholder": "Search...",
       "allRepos": "All repos",

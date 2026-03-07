@@ -15,15 +15,40 @@ const updatedAgo = useTimeAgo(computed(() => props.issue.updatedAt))
 const stateIcon = computed(() => getIssueStateIcon(props.issue.state, props.issue.stateReason))
 const stateColor = computed(() => getIssueStateColor(props.issue.state, props.issue.stateReason))
 
-const issueLink = computed(() => {
-  return localePath(buildWorkItemPath(props.issue.repository.nameWithOwner, props.issue.number)!)
-})
+const router = useRouter()
+const { user } = useUserSession()
+const issueStore = useIssueStore()
+const { localLabels, onLabelAdded, onLabelRemoved } = useLocalLabels(() => props.issue.labels)
+
+const repo = computed(() => props.issue.repository.nameWithOwner)
+
+function onAssigned(login: string) {
+  const assignees = [...props.issue.assignees]
+  if (!assignees.some(a => a.login === login)) {
+    assignees.push({ login, avatarUrl: user.value?.avatarUrl ?? '' })
+  }
+  issueStore.updateIssue(repo.value, props.issue.number, { assignees })
+}
+
+function onUnassigned(login: string) {
+  issueStore.updateIssue(repo.value, props.issue.number, {
+    assignees: props.issue.assignees.filter(a => a.login !== login),
+  })
+}
+
+function navigate() {
+  router.push(localePath(buildWorkItemPath(repo.value, props.issue.number)!))
+}
 </script>
 
 <template>
-  <NuxtLink
-    :to="issueLink"
-    class="flex items-start gap-3 px-4 py-3 hover:bg-elevated transition-colors"
+  <div
+    role="link"
+    tabindex="0"
+    class="flex items-start gap-3 px-4 py-3 hover:bg-elevated transition-colors cursor-pointer"
+    @click="navigate"
+    @keydown.enter="navigate"
+    @keydown.space.prevent="navigate"
   >
     <!-- State icon -->
     <UIcon
@@ -39,15 +64,13 @@ const issueLink = computed(() => {
         <span class="font-medium text-highlighted hover:underline">
           {{ issue.title }}
         </span>
-        <UBadge
-          v-for="label in issue.labels"
-          :key="label.name"
-          variant="subtle"
-          size="xs"
-          :style="{ backgroundColor: `#${label.color}20`, color: `#${label.color}` }"
-        >
-          {{ label.name }}
-        </UBadge>
+        <UiLabelManager
+          :repo="issue.repository.nameWithOwner"
+          :number="issue.number"
+          :labels="localLabels"
+          @added="onLabelAdded"
+          @removed="onLabelRemoved"
+        />
       </div>
 
       <!-- Row 2: Meta -->
@@ -66,7 +89,7 @@ const issueLink = computed(() => {
         <button
           type="button"
           class="inline-flex items-center gap-1 cursor-pointer hover:underline"
-          @click.stop.prevent="openProfile(issue.author.login)"
+          @click.stop="openProfile(issue.author.login)"
         >
           <UAvatar
             :src="issue.author.avatarUrl"
@@ -122,8 +145,15 @@ const issueLink = computed(() => {
       </div>
     </div>
 
-    <!-- Right side: Assignees + author -->
+    <!-- Right side: Assign + Assignees -->
     <div class="flex items-center gap-1 shrink-0">
+      <UiAssignButton
+        :repo="repo"
+        :number="issue.number"
+        :assignees="issue.assignees"
+        @assigned="onAssigned"
+        @unassigned="onUnassigned"
+      />
       <UTooltip
         v-for="assignee in issue.assignees"
         :key="assignee.login"
@@ -132,7 +162,7 @@ const issueLink = computed(() => {
         <button
           type="button"
           class="cursor-pointer"
-          @click.stop.prevent="openProfile(assignee.login)"
+          @click.stop="openProfile(assignee.login)"
         >
           <UAvatar
             :src="assignee.avatarUrl"
@@ -142,5 +172,5 @@ const issueLink = computed(() => {
         </button>
       </UTooltip>
     </div>
-  </NuxtLink>
+  </div>
 </template>

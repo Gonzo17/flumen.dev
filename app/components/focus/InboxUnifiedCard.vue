@@ -134,6 +134,23 @@ const issuePreview = computed(() =>
   preview.value?.type === 'issue' ? preview.value : null,
 )
 
+const { user } = useUserSession()
+const { localLabels, onLabelAdded, onLabelRemoved } = useLocalLabels(() => props.item.labels)
+
+function onAssigned(login: string) {
+  const assignees = [...(props.item.assignees ?? [])]
+  if (!assignees.some(a => a.login === login)) {
+    assignees.push({ login, avatarUrl: user.value?.avatarUrl ?? '' })
+  }
+  store.updateInboxItem(props.item.repo, props.item.number, { assignees })
+}
+
+function onUnassigned(login: string) {
+  store.updateInboxItem(props.item.repo, props.item.number, {
+    assignees: (props.item.assignees ?? []).filter(a => a.login !== login),
+  })
+}
+
 const workItemPath = computed(() => buildWorkItemPath(props.item.repo, props.item.number, props.item.type))
 
 const workItemLink = computed(() => (workItemPath.value ? localePath(workItemPath.value) : null))
@@ -258,13 +275,19 @@ function linkedPrWorkItemLink(prNumber: number) {
                 size="xs"
               />
             </UTooltip>
-            <UBadge
-              v-for="label in item.labels.slice(0, 3)"
-              :key="label.name"
-              :label="label.name"
-              :style="{ backgroundColor: `#${label.color}20`, color: `#${label.color}` }"
-              variant="subtle"
-              size="xs"
+            <UiAssignButton
+              :repo="item.repo"
+              :number="item.number"
+              :assignees="item.assignees ?? []"
+              @assigned="onAssigned"
+              @unassigned="onUnassigned"
+            />
+            <UiLabelManager
+              :repo="item.repo"
+              :number="item.number"
+              :labels="localLabels"
+              @added="onLabelAdded"
+              @removed="onLabelRemoved"
             />
           </div>
         </div>
