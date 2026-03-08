@@ -11,6 +11,9 @@ importers:
 
   .:
     dependencies:
+      '@flumen-dev/mutatio-view':
+        specifier: ^0.0.1-alpha.1
+        version: 0.0.1-alpha.1(vue@3.5.29(typescript@5.9.3))
       '@nuxt/image':
         specifier: 2.0.0
         version: 2.0.0(@upstash/redis@1.36.3)(db0@0.3.4)(ioredis@5.10.0)(magicast@0.5.2)
@@ -747,6 +750,17 @@ packages:
 
   '@floating-ui/vue@1.1.10':
     resolution: {integrity: sha512-vdf8f6rHnFPPLRsmL4p12wYl+Ux4mOJOkjzKEMYVnwdf7UFdvBtHlLvQyx8iKG5vhPRbDRgZxdtpmyigDPjzYg==}
+
+  '@flumen-dev/mutatio-view@0.0.1-alpha.1':
+    resolution: {integrity: sha512-FjYpFt3l7XsRmMO+Y2STBROloTKhbYP7qRJYd5Cuof8J2temUaWiJvKpTCi2Wf9qRzL18pr0IlFY6Pr6o5DqpA==}
+    peerDependencies:
+      vue: ^3.4.0
+
+  '@git-diff-view/core@0.1.1':
+    resolution: {integrity: sha512-8bjNPT3oLAo7mqTRu79WEC44scIBjTtA9iXvvbqfbR2w2GM/FPZajmhPvgIre+YKe2jfTNFjhV2UcbjOarRKfA==}
+
+  '@git-diff-view/lowlight@0.1.1':
+    resolution: {integrity: sha512-OXJv/EII795h/ek6sJVjge1vcTS826/3j2fw3mvmc8QGjQyncSRQhD655WQcamOq7jvEPSf7BC7zh3L36BEl8w==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -4069,6 +4083,9 @@ packages:
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
 
+  fast-diff@1.3.0:
+    resolution: {integrity: sha512-VxPP4NqbUjj6MaAOafWeUn2cXWLcCtljklUtZf0Ind4XQ+QPtmA0b18zZy0jIQx+ExRVCR/ZQpBmik5lXshNsw==}
+
   fast-fifo@1.3.2:
     resolution: {integrity: sha512-/d9sfos4yxzpwkDkuN7k2SqFKtYNmCTzgfEpz82x34IM9/zc8KGxQoXg1liNC/izpRM/MBdt44Nmx41ZWqk+FQ==}
 
@@ -6997,6 +7014,24 @@ snapshots:
     transitivePeerDependencies:
       - '@vue/composition-api'
       - vue
+
+  '@flumen-dev/mutatio-view@0.0.1-alpha.1(vue@3.5.29(typescript@5.9.3))':
+    dependencies:
+      '@git-diff-view/core': 0.1.1
+      vue: 3.5.29(typescript@5.9.3)
+
+  '@git-diff-view/core@0.1.1':
+    dependencies:
+      '@git-diff-view/lowlight': 0.1.1
+      fast-diff: 1.3.0
+      highlight.js: 11.11.1
+      lowlight: 3.3.0
+
+  '@git-diff-view/lowlight@0.1.1':
+    dependencies:
+      '@types/hast': 3.0.4
+      highlight.js: 11.11.1
+      lowlight: 3.3.0
 
   '@humanfs/core@0.19.1': {}
 
@@ -10408,6 +10443,8 @@ snapshots:
   fake-indexeddb@6.2.5: {}
 
   fast-deep-equal@3.1.3: {}
+
+  fast-diff@1.3.0: {}
 
   fast-fifo@1.3.2: {}
 

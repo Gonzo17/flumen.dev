@@ -211,6 +211,17 @@
         "commitActivity": "Commit activity (12 weeks)"
       }
     },
+    "diff": {
+      "split": "Split",
+      "unified": "Unified",
+      "empty": "No changes found.",
+      "expandUp": "Expand up",
+      "expandDown": "Expand down",
+      "expandAll": "Expand all",
+      "fileCount": "{count} file | {count} files",
+      "wrap": "Wrap lines",
+      "nowrap": "No wrap"
+    },
     "workItem": {
       "state": {
         "open": "Open",
@@ -413,6 +424,10 @@
     "all": "All"
   },
   "workItems": {
+    "tabs": {
+      "conversation": "Conversation",
+      "changes": "Changes"
+    },
     "badge": {
       "bot": "Bot"
     },

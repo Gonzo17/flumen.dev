@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import type { ReviewComment } from '~~/shared/types/work-item'
-
 const props = defineProps<{
   comment: ReviewComment
   replies?: ReviewComment[]
@@ -108,14 +106,16 @@ function executeDelete() {
       >
         {{ t('workItems.timeline.outdated') }}
       </UBadge>
-      <TimelineEditActions
-        class="ml-auto"
-        :can-update="comment.viewerCanUpdate"
-        :can-delete="comment.viewerCanDelete"
-        :edit-disabled="editingCommentId !== null"
-        @edit="startEditComment(comment)"
-        @delete="requestDelete(comment, 'comment')"
-      />
+      <div class="ml-auto flex items-center gap-1">
+        <TimelineEditActions
+          :can-update="comment.viewerCanUpdate"
+          :can-delete="comment.viewerCanDelete"
+          :edit-disabled="editingCommentId !== null"
+          @edit="startEditComment(comment)"
+          @delete="requestDelete(comment, 'comment')"
+        />
+        <span class="text-[11px] text-dimmed whitespace-nowrap">{{ timeAgo(comment.createdAt) }}</span>
+      </div>
     </div>
 
     <TimelineDiffHunkViewer
@@ -192,8 +192,7 @@ function executeDelete() {
         >
           <div
             v-if="loggedIn && hoveredReplyId === reply.id && issueNumber !== undefined && reply.databaseId"
-            class="absolute -top-3 z-10"
-            :class="(reply.viewerCanUpdate || reply.viewerCanDelete) ? 'right-20' : 'right-2'"
+            class="absolute -top-7 right-2 z-10"
           >
             <TimelineQuickReactions
               :subject-id="reply.id"

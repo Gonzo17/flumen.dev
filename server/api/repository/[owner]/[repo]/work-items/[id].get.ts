@@ -144,6 +144,7 @@ query($owner: String!, $repo: String!, $number: Int!) {
       viewerCanUpdate
       reviewDecision
       headRefName
+      headRefOid
       headRepository { owner { login } name }
       author { login avatarUrl }
       comments { totalCount }
@@ -415,6 +416,7 @@ interface PullDetailNode {
   isDraft?: boolean
   viewerCanUpdate?: boolean
   headRefName?: string
+  headRefOid?: string
   headRepository?: { owner: { login: string }, name: string } | null
   body: string
   bodyHTML: string
@@ -763,6 +765,7 @@ const fetchWorkItemDetail = defineCachedFunction(
           reviewDecision: pull.reviewDecision ?? null,
           ciStatus: mapCiStatus(ciRaw),
           updatedAt: pull.updatedAt,
+          headSha: pull.headRefOid,
         })
 
         pullTimelineEntries.push(createInitialPullEntry(pull))
@@ -832,16 +835,15 @@ const fetchWorkItemDetail = defineCachedFunction(
 
     const ciRaw = pull.commits?.nodes?.[0]?.commit?.statusCheckRollup?.state
     const pullInitialEntry = createInitialPullEntry(pull)
-    const timeline = (pull.timelineItems?.nodes ?? [])
+    const pullTimelineEntries = (pull.timelineItems?.nodes ?? [])
       .map(node => mapPullTimeline(node, pull.number))
       .filter((entry: WorkItemTimelineEntry | null): entry is WorkItemTimelineEntry => entry !== null)
-    const unifiedPullTimeline = [pullInitialEntry, ...timeline]
-      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    const pullTimeline = [pullInitialEntry, ...pullTimelineEntries]
 
     const replyMap = buildReplyMap(pull.reviewThreads?.nodes ?? [])
-    injectReplies(unifiedPullTimeline, replyMap)
+    injectReplies(pullTimeline, replyMap)
 
-    const reviewSummary = unifiedPullTimeline
+    const reviewSummary = pullTimeline
       .filter(item => item.kind === 'review')
       .reduce(
         (acc, item) => {
@@ -852,6 +854,38 @@ const fetchWorkItemDetail = defineCachedFunction(
         },
         { approved: 0, changesRequested: 0, commented: 0 },
       )
+
+    // Fetch linked issue timelines and merge
+    const linkedIssueNodes = pull.closingIssuesReferences.nodes
+    const issueTimelineEntries: WorkItemTimelineEntry[] = []
+
+    if (linkedIssueNodes.length) {
+      const issueResponses = await Promise.allSettled(
+        linkedIssueNodes.map(async (node) => {
+          const issueData = await githubGraphQL<{ repository?: { issue?: IssueDetailNode | null } }>(token, ISSUE_DETAIL_QUERY, {
+            owner,
+            repo,
+            number: node.number,
+          })
+          return issueData.repository?.issue ?? null
+        }),
+      )
+
+      for (const issueResponse of issueResponses) {
+        if (issueResponse.status === 'rejected' || !issueResponse.value) continue
+        const linkedIssue = issueResponse.value
+
+        issueTimelineEntries.push(createInitialIssueEntry(linkedIssue))
+
+        const entries = linkedIssue.timelineItems.nodes
+          .map(node => mapIssueTimeline(node, linkedIssue.number))
+          .filter((entry: WorkItemTimelineEntry | null): entry is WorkItemTimelineEntry => entry !== null)
+        issueTimelineEntries.push(...entries)
+      }
+    }
+
+    const timeline = [...pullTimeline, ...issueTimelineEntries]
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
 
     return {
       id,
@@ -873,7 +907,7 @@ const fetchWorkItemDetail = defineCachedFunction(
       issue: null,
       pull: null,
       linkedPulls: [],
-      linkedIssues: pull.closingIssuesReferences.nodes.map(node => ({
+      linkedIssues: linkedIssueNodes.map(node => ({
         type: 'issue',
         number: node.number,
         title: node.title,
@@ -885,9 +919,10 @@ const fetchWorkItemDetail = defineCachedFunction(
       url: pull.url,
       repo: `${owner}/${repo}`,
       contributions: [],
-      timeline: unifiedPullTimeline,
+      timeline,
       headBranch: pull.headRefName ?? null,
       headBranchRepo: pull.headRepository ? `${pull.headRepository.owner.login}/${pull.headRepository.name}` : null,
+      headSha: pull.headRefOid,
       reviewSummary,
       reviewers: mapReviewers(pull),
     }

@@ -211,6 +211,17 @@
         "commitActivity": "Commit-Aktivität (12 Wochen)"
       }
     },
+    "diff": {
+      "split": "Geteilt",
+      "unified": "Vereint",
+      "empty": "Keine Änderungen gefunden.",
+      "expandUp": "Nach oben erweitern",
+      "expandDown": "Nach unten erweitern",
+      "expandAll": "Alle erweitern",
+      "fileCount": "{count} Datei | {count} Dateien",
+      "wrap": "Zeilenumbruch",
+      "nowrap": "Kein Umbruch"
+    },
     "workItem": {
       "state": {
         "open": "Offen",
@@ -413,6 +424,10 @@
     "all": "Alle"
   },
   "workItems": {
+    "tabs": {
+      "conversation": "Konversation",
+      "changes": "\u00c4nderungen"
+    },
     "badge": {
       "bot": "Bot"
     },

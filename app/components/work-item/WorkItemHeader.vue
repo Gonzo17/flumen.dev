@@ -1,18 +1,22 @@
 <script lang="ts" setup>
 import type { CheckRunDetail } from '~~/shared/types/check-run'
-import type { IssueDetail } from '~~/shared/types/issue-detail'
 import type { WorkItemDetail } from '~~/shared/types/work-item'
 import { formatDuration, getCIIcon, getIssueStateColor, getIssueStateIcon, getPRStateColor, getPRStateIcon } from '~/utils/prMeta'
 
 const props = defineProps<{
   workItem: WorkItemDetail
   repo: string
-  issue?: IssueDetail | null
 }>()
 
 const { t } = useI18n()
 const toast = useToast()
 const { open: openProfile } = useUserProfileDialog()
+
+// Fetch issue detail for ClaimFlow (deduplicates via useAsyncData key)
+const isIssuePrimary = computed(() => props.workItem.primaryType === 'issue')
+const issueNumber = computed(() => isIssuePrimary.value ? props.workItem.number : undefined)
+const repo = computed(() => props.repo)
+const { issue } = useIssueDetail(repo, issueNumber)
 
 const createdAgo = useTimeAgo(computed(() => props.workItem.createdAt))
 const updatedAgo = useTimeAgo(computed(() => props.workItem.updatedAt))
