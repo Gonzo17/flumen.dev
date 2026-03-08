@@ -28,7 +28,9 @@ let tickConsumers = 0
 function startTick() {
   tickConsumers++
   if (!tickInterval) {
-    tickInterval = setInterval(() => { tick.value++ }, 60_000)
+    tickInterval = setInterval(() => {
+      tick.value++
+    }, 60_000)
   }
 }
 
@@ -51,7 +53,7 @@ export function useTimeAgo(date: Ref<string | number> | string | number) {
   }
 
   return computed(() => {
-    tick.value // subscribe to tick for periodic refresh
+    void tick.value // subscribe to tick for periodic refresh
     const timestamp = typeof date === 'string' || typeof date === 'number' ? date : date.value
     return formatTimeAgo(timestamp, t)
   })
