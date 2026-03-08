@@ -11,6 +11,7 @@ const { user } = useUserSession()
 const { open: openProfile } = useUserProfileDialog()
 
 const repoOwner = computed(() => props.repo.split('/')[0] ?? '')
+const localePrefix = computed(() => locale.value ? `/${locale.value}` : '')
 
 // --- Your Involvement ---
 
@@ -33,21 +34,14 @@ const involvement = computed<InvolvementRole[]>(() => {
   if (wi.assignees.some(a => a.login === login)) {
     roles.push({ key: 'assignee', icon: 'i-lucide-user-check', label: t('issues.sidebar.assignee'), color: 'text-success' })
   }
-  if (wi.reviewers?.length) {
-    const myReview = wi.reviewers.find(r => r.login === login)
-    if (myReview) {
-      const reviewColor = myReview.state === 'APPROVED'
-        ? 'text-success'
-        : myReview.state === 'CHANGES_REQUESTED'
-          ? 'text-error'
-          : 'text-info'
-      const stateLabel = myReview.state === 'APPROVED'
-        ? 'Approved'
-        : myReview.state === 'CHANGES_REQUESTED'
-          ? 'Changes'
-          : t('issues.sidebar.reviewer')
-      roles.push({ key: 'reviewer', icon: 'i-lucide-eye', label: stateLabel, color: reviewColor })
-    }
+  const myReview = wi.reviewers?.find(r => r.login === login)
+  if (myReview) {
+    const reviewColor = myReview.state === 'APPROVED'
+      ? 'text-success'
+      : myReview.state === 'CHANGES_REQUESTED'
+        ? 'text-error'
+        : 'text-info'
+    roles.push({ key: 'reviewer', icon: 'i-lucide-eye', label: t(`workItems.review.state.${myReview.state}`), color: reviewColor })
   }
   if (wi.timeline.some(e => (e.kind === 'comment' || e.kind === 'review') && e.author === login && !e.isInitial)) {
     roles.push({ key: 'commenter', icon: 'i-lucide-message-circle', label: t('issues.sidebar.commenter'), color: 'text-muted' })
@@ -59,56 +53,60 @@ const involvement = computed<InvolvementRole[]>(() => {
 // --- Linked Items ---
 
 interface LinkedItem {
-  kind: 'issue' | 'pull'
   number: number
   title: string
-  state: string
   to: string
-  ciStatus?: string | null
-  reviewDecision?: string | null
+  icon: string
+  iconColor: string
+  ciDot: string
+  reviewDot: string
+}
+
+function stateIcon(kind: 'issue' | 'pull', state: string) {
+  if (state === 'MERGED') return { icon: 'i-lucide-git-merge', color: 'text-violet-500' }
+  if (state === 'CLOSED') return { icon: 'i-lucide-circle-x', color: 'text-error' }
+  if (kind === 'pull') return { icon: 'i-lucide-git-pull-request', color: 'text-success' }
+  return { icon: 'i-lucide-circle-dot', color: 'text-success' }
 }
 
 const linkedItems = computed<LinkedItem[]>(() => {
   const wi = props.workItem
-  const prefix = locale.value ? `/${locale.value}` : ''
+  const prefix = localePrefix.value
   const items: LinkedItem[] = []
-
-  // Contributions have richer data (CI, review decision)
   const contributionNumbers = new Set(wi.contributions.map(c => c.number))
 
   for (const ref of wi.linkedPulls) {
     const contribution = wi.contributions.find(c => c.number === ref.number)
+    const state = contribution?.state ?? ref.state ?? 'OPEN'
+    const { icon, color } = stateIcon('pull', state)
     items.push({
-      kind: 'pull',
       number: ref.number,
       title: ref.title,
-      state: contribution?.state ?? ref.state ?? 'OPEN',
       to: `${prefix}/repos/${props.repo}/work-items/${ref.number}`,
-      ciStatus: contribution?.ciStatus ?? null,
-      reviewDecision: contribution?.reviewDecision ?? null,
+      icon,
+      iconColor: color,
+      ciDot: ciDotColor(contribution?.ciStatus),
+      reviewDot: reviewDotColor(contribution?.reviewDecision),
     })
   }
 
   for (const ref of wi.linkedIssues) {
     if (contributionNumbers.has(ref.number)) continue
+    const state = ref.state ?? 'OPEN'
+    const { icon, color } = stateIcon('issue', state)
     items.push({
-      kind: 'issue',
       number: ref.number,
       title: ref.title,
-      state: ref.state ?? 'OPEN',
       to: `${prefix}/repos/${props.repo}/work-items/${ref.number}`,
+      icon,
+      iconColor: color,
+      ciDot: '',
+      reviewDot: '',
     })
   }
 
   return items
 })
-
-function linkedItemStateIcon(item: LinkedItem) {
-  if (item.state === 'MERGED') return { name: 'i-lucide-git-merge', color: 'text-violet-500' }
-  if (item.state === 'CLOSED') return { name: 'i-lucide-circle-x', color: 'text-error' }
-  if (item.kind === 'pull') return { name: 'i-lucide-git-pull-request', color: 'text-success' }
-  return { name: 'i-lucide-circle-dot', color: 'text-success' }
-}
 
 function ciDotColor(status: string | null | undefined) {
   if (status === 'SUCCESS') return 'bg-success'
@@ -365,7 +363,7 @@ const links = computed(() => {
           const number = Number(num)
           const isSameRepo = `${owner}/${repo}` === props.repo
           const label = isSameRepo ? `#${number}` : `${owner}/${repo}#${number}`
-          const prefix = locale.value ? `/${locale.value}` : ''
+          const prefix = localePrefix.value
           workItems.push({
             owner: owner!,
             repo: repo!,
@@ -582,22 +580,21 @@ const linksOverflow = computed(() =>
           class="flex items-center gap-1.5 rounded px-1.5 py-1 -mx-1.5 hover:bg-elevated transition-colors group"
         >
           <UIcon
-            :name="linkedItemStateIcon(item).name"
+            :name="item.icon"
             class="size-3.5 shrink-0"
-            :class="linkedItemStateIcon(item).color"
+            :class="item.iconColor"
           />
           <span class="text-xs font-mono text-muted shrink-0">#{{ item.number }}</span>
           <span class="text-xs text-muted group-hover:text-highlighted transition-colors truncate flex-1 min-w-0">{{ item.title }}</span>
-          <!-- CI + Review dots for contributions -->
           <span
-            v-if="ciDotColor(item.ciStatus)"
+            v-if="item.ciDot"
             class="size-1.5 rounded-full shrink-0"
-            :class="ciDotColor(item.ciStatus)"
+            :class="item.ciDot"
           />
           <span
-            v-if="reviewDotColor(item.reviewDecision)"
+            v-if="item.reviewDot"
             class="size-1.5 rounded-full shrink-0"
-            :class="reviewDotColor(item.reviewDecision)"
+            :class="item.reviewDot"
           />
         </NuxtLink>
       </div>
@@ -837,8 +834,8 @@ const linksOverflow = computed(() =>
       </h3>
       <div class="flex items-end gap-1 h-8">
         <div
-          v-for="(week, wi) in activityWeeks"
-          :key="wi"
+          v-for="(week, weekIdx) in activityWeeks"
+          :key="weekIdx"
           class="flex-1 rounded-sm transition-all"
           :class="week.count > 0 ? 'bg-primary/60' : 'bg-muted/20'"
           :style="{ height: `${Math.max(week.height, 8)}%` }"
