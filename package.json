@@ -24,7 +24,6 @@
   },
   "dependencies": {
     "@flumen-dev/mutatio-view": "^0.0.1-alpha.1",
-    "@git-diff-view/core": "^0.1.1",
     "@nuxt/image": "2.0.0",
     "@nuxt/ui": "4.5.0",
     "@nuxtjs/i18n": "10.2.3",
