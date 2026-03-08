@@ -1105,9 +1105,6 @@
             "assignee": {
               "type": "string"
             },
-            "reviewer": {
-              "type": "string"
-            },
             "commenter": {
               "type": "string"
             },

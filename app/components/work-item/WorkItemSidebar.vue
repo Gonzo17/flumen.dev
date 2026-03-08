@@ -36,12 +36,13 @@ const involvement = computed<InvolvementRole[]>(() => {
   }
   const myReview = wi.reviewers?.find(r => r.login === login)
   if (myReview) {
-    const reviewColor = myReview.state === 'APPROVED'
+    const state = myReview.state
+    const reviewColor = state === 'APPROVED'
       ? 'text-success'
-      : myReview.state === 'CHANGES_REQUESTED'
+      : state === 'CHANGES_REQUESTED'
         ? 'text-error'
         : 'text-info'
-    roles.push({ key: 'reviewer', icon: 'i-lucide-eye', label: t(`workItems.review.state.${myReview.state}`), color: reviewColor })
+    roles.push({ key: 'reviewer', icon: 'i-lucide-eye', label: t(`workItems.review.state.${state}`), color: reviewColor })
   }
   if (wi.timeline.some(e => (e.kind === 'comment' || e.kind === 'review') && e.author === login && !e.isInitial)) {
     roles.push({ key: 'commenter', icon: 'i-lucide-message-circle', label: t('issues.sidebar.commenter'), color: 'text-muted' })
@@ -575,7 +576,7 @@ const linksOverflow = computed(() =>
       <div class="space-y-1.5">
         <NuxtLink
           v-for="item in linkedItems"
-          :key="`${item.kind}-${item.number}`"
+          :key="item.number"
           :to="item.to"
           class="flex items-center gap-1.5 rounded px-1.5 py-1 -mx-1.5 hover:bg-elevated transition-colors group"
         >

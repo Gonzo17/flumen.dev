@@ -20,10 +20,38 @@ function formatTimeAgo(timestamp: string | number, t: (key: string, params?: unk
   return t('time.yearsAgo', { count: years })
 }
 
-/** Reactive composable — for values that change over time (e.g. repo.pushedAt) */
+/** Reactive tick that forces time-ago labels to refresh periodically */
+const tick = ref(0)
+let tickInterval: ReturnType<typeof setInterval> | null = null
+let tickConsumers = 0
+
+function startTick() {
+  tickConsumers++
+  if (!tickInterval) {
+    tickInterval = setInterval(() => { tick.value++ }, 60_000)
+  }
+}
+
+function stopTick() {
+  tickConsumers--
+  if (tickConsumers <= 0 && tickInterval) {
+    clearInterval(tickInterval)
+    tickInterval = null
+    tickConsumers = 0
+  }
+}
+
+/** Reactive composable — auto-refreshes every 60s so "3 days ago" stays current */
 export function useTimeAgo(date: Ref<string | number> | string | number) {
   const { t } = useI18n()
+
+  if (import.meta.client) {
+    onMounted(startTick)
+    onUnmounted(stopTick)
+  }
+
   return computed(() => {
+    tick.value // subscribe to tick for periodic refresh
     const timestamp = typeof date === 'string' || typeof date === 'number' ? date : date.value
     return formatTimeAgo(timestamp, t)
   })
