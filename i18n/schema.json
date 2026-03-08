@@ -1096,6 +1096,18 @@
         "sidebar": {
           "type": "object",
           "properties": {
+            "involvement": {
+              "type": "string"
+            },
+            "author": {
+              "type": "string"
+            },
+            "assignee": {
+              "type": "string"
+            },
+            "commenter": {
+              "type": "string"
+            },
             "participants": {
               "type": "string"
             },
@@ -1105,6 +1117,9 @@
             "mentions": {
               "type": "string"
             },
+            "linked": {
+              "type": "string"
+            },
             "workItems": {
               "type": "string"
             },
@@ -1112,6 +1127,12 @@
               "type": "string"
             },
             "links": {
+              "type": "string"
+            },
+            "activity": {
+              "type": "string"
+            },
+            "lastActivity": {
               "type": "string"
             },
             "showLess": {

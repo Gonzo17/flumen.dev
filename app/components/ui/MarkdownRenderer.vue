@@ -40,12 +40,14 @@ const html = computed(() => {
   return renderMarkdown(md, props.breaks)
 })
 
+const { open: openUserProfile } = useUserProfileDialog()
+
 function enhance() {
   const el = container.value
   if (!el) return
 
   if (props.linkifyMentions) {
-    enhanceMentionChips(el)
+    enhanceMentionChips(el, openUserProfile)
   }
 
   if (props.repoContext) {

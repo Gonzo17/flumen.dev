@@ -14,7 +14,7 @@ const GITHUB_USER_URL = /^https?:\/\/github\.com\/([a-zA-Z\d](?:[a-zA-Z\d-]*[a-z
  * Post-render DOM enhancement: convert @mention links into interactive chips
  * with avatar, username, copy and open buttons.
  */
-export function enhanceMentionChips(dom: HTMLElement) {
+export function enhanceMentionChips(dom: HTMLElement, onClickLogin?: (login: string) => void) {
   dom.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((a) => {
     const href = a.getAttribute('href') || ''
 
@@ -70,6 +70,7 @@ export function enhanceMentionChips(dom: HTMLElement) {
 
     a.addEventListener('click', (e) => {
       e.preventDefault()
+      if (onClickLogin) onClickLogin(login)
     })
   })
 }

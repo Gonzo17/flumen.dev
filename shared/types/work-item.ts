@@ -88,6 +88,7 @@ export interface WorkItemTimelineEntry {
   state?: string
   reviewState?: string
   labelName?: string
+  labelColor?: string | null
   assignee?: string
   reviewComments?: ReviewComment[]
   viewerCanUpdate?: boolean

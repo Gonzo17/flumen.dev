@@ -11,6 +11,122 @@ const { user } = useUserSession()
 const { open: openProfile } = useUserProfileDialog()
 
 const repoOwner = computed(() => props.repo.split('/')[0] ?? '')
+const localePrefix = computed(() => locale.value ? `/${locale.value}` : '')
+
+// --- Your Involvement ---
+
+interface InvolvementRole {
+  key: string
+  icon: string
+  label: string
+  color: string
+}
+
+const involvement = computed<InvolvementRole[]>(() => {
+  const login = user.value?.login
+  if (!login) return []
+  const wi = props.workItem
+  const roles: InvolvementRole[] = []
+
+  if (wi.author.login === login) {
+    roles.push({ key: 'author', icon: 'i-lucide-pen-line', label: t('issues.sidebar.author'), color: 'text-primary' })
+  }
+  if (wi.assignees.some(a => a.login === login)) {
+    roles.push({ key: 'assignee', icon: 'i-lucide-user-check', label: t('issues.sidebar.assignee'), color: 'text-success' })
+  }
+  const myReview = wi.reviewers?.find(r => r.login === login)
+  if (myReview) {
+    const state = myReview.state
+    const reviewColor = state === 'APPROVED'
+      ? 'text-success'
+      : state === 'CHANGES_REQUESTED'
+        ? 'text-error'
+        : 'text-info'
+    roles.push({ key: 'reviewer', icon: 'i-lucide-eye', label: t(`workItems.review.state.${state}`), color: reviewColor })
+  }
+  if (wi.timeline.some(e => (e.kind === 'comment' || e.kind === 'review') && e.author === login && !e.isInitial)) {
+    roles.push({ key: 'commenter', icon: 'i-lucide-message-circle', label: t('issues.sidebar.commenter'), color: 'text-muted' })
+  }
+
+  return roles
+})
+
+// --- Linked Items ---
+
+interface LinkedItem {
+  number: number
+  title: string
+  to: string
+  icon: string
+  iconColor: string
+  ciDot: string
+  reviewDot: string
+}
+
+function stateIcon(kind: 'issue' | 'pull', state: string) {
+  if (state === 'MERGED') return { icon: 'i-lucide-git-merge', color: 'text-violet-500' }
+  if (state === 'CLOSED') return { icon: 'i-lucide-circle-x', color: 'text-error' }
+  if (kind === 'pull') return { icon: 'i-lucide-git-pull-request', color: 'text-success' }
+  return { icon: 'i-lucide-circle-dot', color: 'text-success' }
+}
+
+const linkedItems = computed<LinkedItem[]>(() => {
+  const wi = props.workItem
+  const prefix = localePrefix.value
+  const items: LinkedItem[] = []
+  const contributionNumbers = new Set(wi.contributions.map(c => c.number))
+
+  for (const ref of wi.linkedPulls) {
+    const contribution = wi.contributions.find(c => c.number === ref.number)
+    const state = contribution?.state ?? ref.state ?? 'OPEN'
+    const { icon, color } = stateIcon('pull', state)
+    items.push({
+      number: ref.number,
+      title: ref.title,
+      to: `${prefix}/repos/${props.repo}/work-items/${ref.number}`,
+      icon,
+      iconColor: color,
+      ciDot: ciDotColor(contribution?.ciStatus),
+      reviewDot: reviewDotColor(contribution?.reviewDecision),
+    })
+  }
+
+  for (const ref of wi.linkedIssues) {
+    if (contributionNumbers.has(ref.number)) continue
+    const state = ref.state ?? 'OPEN'
+    const { icon, color } = stateIcon('issue', state)
+    items.push({
+      number: ref.number,
+      title: ref.title,
+      to: `${prefix}/repos/${props.repo}/work-items/${ref.number}`,
+      icon,
+      iconColor: color,
+      ciDot: '',
+      reviewDot: '',
+    })
+  }
+
+  return items
+})
+
+function ciDotColor(status: string | null | undefined) {
+  if (status === 'SUCCESS') return 'bg-success'
+  if (status === 'FAILURE') return 'bg-error'
+  if (status === 'PENDING') return 'bg-warning'
+  return ''
+}
+
+function reviewDotColor(decision: string | null | undefined) {
+  if (decision === 'APPROVED') return 'bg-success'
+  if (decision === 'CHANGES_REQUESTED') return 'bg-error'
+  if (decision === 'REVIEW_REQUIRED') return 'bg-warning'
+  return ''
+}
+
+// --- Activity Overview ---
+
+const timelineDates = computed(() => props.workItem.timeline.map(e => e.createdAt))
+const { buckets: activityWeeks, lastActivity, lastActivityAgo } = useActivityBuckets(timelineDates)
 
 // --- Helpers ---
 
@@ -248,7 +364,7 @@ const links = computed(() => {
           const number = Number(num)
           const isSameRepo = `${owner}/${repo}` === props.repo
           const label = isSameRepo ? `#${number}` : `${owner}/${repo}#${number}`
-          const prefix = locale.value ? `/${locale.value}` : ''
+          const prefix = localePrefix.value
           workItems.push({
             owner: owner!,
             repo: repo!,
@@ -316,6 +432,27 @@ const linksOverflow = computed(() =>
 
 <template>
   <aside class="space-y-5 text-sm">
+    <!-- Your Involvement -->
+    <div v-if="involvement.length">
+      <h3 class="text-xs font-medium text-muted uppercase tracking-wide mb-2">
+        {{ t('issues.sidebar.involvement') }}
+      </h3>
+      <div class="flex flex-wrap gap-1.5">
+        <span
+          v-for="role in involvement"
+          :key="role.key"
+          class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium bg-elevated"
+          :class="role.color"
+        >
+          <UIcon
+            :name="role.icon"
+            class="size-3"
+          />
+          {{ role.label }}
+        </span>
+      </div>
+    </div>
+
     <!-- Participants -->
     <div>
       <h3 class="text-xs font-medium text-muted uppercase tracking-wide mb-2">
@@ -428,6 +565,39 @@ const linksOverflow = computed(() =>
             </button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Linked Items -->
+    <div v-if="linkedItems.length">
+      <h3 class="text-xs font-medium text-muted uppercase tracking-wide mb-2">
+        {{ t('issues.sidebar.linked') }}
+      </h3>
+      <div class="space-y-1.5">
+        <NuxtLink
+          v-for="item in linkedItems"
+          :key="item.number"
+          :to="item.to"
+          class="flex items-center gap-1.5 rounded px-1.5 py-1 -mx-1.5 hover:bg-elevated transition-colors group"
+        >
+          <UIcon
+            :name="item.icon"
+            class="size-3.5 shrink-0"
+            :class="item.iconColor"
+          />
+          <span class="text-xs font-mono text-muted shrink-0">#{{ item.number }}</span>
+          <span class="text-xs text-muted group-hover:text-highlighted transition-colors truncate flex-1 min-w-0">{{ item.title }}</span>
+          <span
+            v-if="item.ciDot"
+            class="size-1.5 rounded-full shrink-0"
+            :class="item.ciDot"
+          />
+          <span
+            v-if="item.reviewDot"
+            class="size-1.5 rounded-full shrink-0"
+            :class="item.reviewDot"
+          />
+        </NuxtLink>
       </div>
     </div>
 
@@ -657,6 +827,24 @@ const linksOverflow = computed(() =>
           {{ linksExpanded ? t('issues.sidebar.showLess') : `+${linksOverflow}` }}
         </button>
       </div>
+    </div>
+    <!-- Activity -->
+    <div v-if="lastActivity">
+      <h3 class="text-xs font-medium text-muted uppercase tracking-wide mb-2">
+        {{ t('issues.sidebar.activity') }}
+      </h3>
+      <div class="flex items-end gap-1 h-8">
+        <div
+          v-for="(week, weekIdx) in activityWeeks"
+          :key="weekIdx"
+          class="flex-1 rounded-sm transition-all"
+          :class="week.count > 0 ? 'bg-primary/60' : 'bg-muted/20'"
+          :style="{ height: `${Math.max(week.height, 8)}%` }"
+        />
+      </div>
+      <p class="text-xs text-muted/60 mt-1">
+        {{ t('issues.sidebar.lastActivity', { time: lastActivityAgo }) }}
+      </p>
     </div>
   </aside>
 </template>
