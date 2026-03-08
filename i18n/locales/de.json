@@ -366,6 +366,7 @@
       "participants": "Beteiligte",
       "ownerActive": "Inhaber beteiligt sich",
       "mentions": "Erwähnungen",
+      "workItems": "Work Items",
       "reproductions": "Reproduktionen",
       "links": "Links",
       "showLess": "Weniger"
@@ -848,6 +849,11 @@
       "break": "Kurze Pause",
       "away": "Abwesend"
     }
+  },
+  "references": {
+    "self": "Dieses Work Item",
+    "local": "Work Item in diesem Repository",
+    "external": "Work Item in {repo}"
   },
   "settings": {
     "appearance": {

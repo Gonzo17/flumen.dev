@@ -366,6 +366,7 @@
       "participants": "Participants",
       "ownerActive": "Owner joined the discussion",
       "mentions": "Mentions",
+      "workItems": "Work Items",
       "reproductions": "Reproductions",
       "links": "Links",
       "showLess": "Show less"
@@ -848,6 +849,11 @@
       "break": "On a break",
       "away": "Away"
     }
+  },
+  "references": {
+    "self": "This work item",
+    "local": "Work item in this repository",
+    "external": "Work item in {repo}"
   },
   "settings": {
     "appearance": {

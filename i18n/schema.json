@@ -1105,6 +1105,9 @@
             "mentions": {
               "type": "string"
             },
+            "workItems": {
+              "type": "string"
+            },
             "reproductions": {
               "type": "string"
             },
@@ -2550,6 +2553,21 @@
             }
           },
           "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "references": {
+      "type": "object",
+      "properties": {
+        "self": {
+          "type": "string"
+        },
+        "local": {
+          "type": "string"
+        },
+        "external": {
+          "type": "string"
         }
       },
       "additionalProperties": false
