@@ -178,8 +178,6 @@
       "forkedFrom": "Forked from",
       "lists": "Lists",
       "workItems": "Work Items",
-      "recentIssues": "Recent Issues",
-      "recentPrs": "Recent Pull Requests",
       "specialFiles": {
         "readme": "README",
         "codeOfConduct": "Code of Conduct",
@@ -197,18 +195,38 @@
         "code": "Code"
       },
       "stats": {
-        "stars": "Stars",
         "forks": "Forks",
         "watchers": "Watchers",
         "openIssues": "Open Issues",
         "openPrs": "Open PRs",
-        "contributors": "Contributors",
+        "about": "About",
         "topContributors": "Top contributors",
+        "andMore": "+{count} more",
         "lastCommit": "Last commit",
         "lastRelease": "Latest release",
         "noRelease": "No releases",
         "license": "License",
-        "commitActivity": "Commit activity (12 weeks)"
+        "defaultBranch": "Default branch",
+        "commitActivity": "Commit activity (12 weeks)",
+        "health": "Health",
+        "healthCategory": {
+          "commits": "Commit recency",
+          "releases": "Release frequency",
+          "community": "Community",
+          "activity": "Commit activity",
+          "license": "License",
+          "stars": "Popularity"
+        }
+      },
+      "ownBanner": {
+        "title": "This is Flumen",
+        "description": "The tool you're using right now. Built in the open, for maintainers who deserve better tools. No tracking, no paywalls — just focus.",
+        "goals": {
+          "openSource": "Fully open source",
+          "noTracking": "Zero tracking",
+          "communityDriven": "Community driven",
+          "betterThanGithub": "Better than GitHub UI"
+        }
       }
     },
     "diff": {

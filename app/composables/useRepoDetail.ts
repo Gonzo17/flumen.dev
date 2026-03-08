@@ -156,11 +156,12 @@ export function useRepoDetail(owner: Ref<string>, repo: Ref<string>) {
       const queryPath = route.query.path as string || ''
       await Promise.all([
         fetchRepo(),
-        fetchStats(),
         fetchContents(queryPath),
       ])
       await fetchSpecialFiles()
       initFromRoute()
+      // Stats are not critical for initial render — load client-side only
+      fetchStats().catch(() => {})
     }
     catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to load repository'

@@ -44,6 +44,7 @@ const mockStats: RepoHealthStats = {
   contributorsCount: 1,
   topContributors: [{ login: 'alice', avatarUrl: 'https://a.com/alice.png', contributions: 5 }],
   weeklyCommitActivity: [0, 1, 2],
+  languages: { TypeScript: 5000, Vue: 3000 },
 }
 
 registerEndpoint('/api/repository/acme/demo', {

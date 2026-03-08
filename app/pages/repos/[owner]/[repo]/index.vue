@@ -32,14 +32,16 @@ const {
 await loadAll()
 
 const githubUrl = computed(() => repoDetail.value?.htmlUrl ?? `https://github.com/${owner.value}/${repo.value}`)
+
+const localePath = useLocalePath()
+const repoBase = computed(() => `/repos/${owner.value}/${repo.value}`)
 </script>
 
 <template>
-  <div class="max-w-7xl mx-auto px-4 py-6">
+  <div class="p-4 space-y-4">
     <!-- Error state -->
     <UCard
       v-if="error"
-      class="mb-4"
     >
       <div class="text-center py-8">
         <UIcon
@@ -62,15 +64,14 @@ const githubUrl = computed(() => repoDetail.value?.htmlUrl ?? `https://github.co
     <!-- Loading state -->
     <div
       v-else-if="loading"
-      class="space-y-4"
     >
-      <USkeleton class="h-24 w-full" />
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div class="lg:col-span-8 space-y-4">
+      <USkeleton class="h-36 w-full" />
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 space-y-4">
           <USkeleton class="h-64 w-full" />
           <USkeleton class="h-48 w-full" />
         </div>
-        <div class="lg:col-span-4 space-y-4">
+        <div class="space-y-4">
           <USkeleton class="h-80 w-full" />
         </div>
       </div>
@@ -93,142 +94,108 @@ const githubUrl = computed(() => repoDetail.value?.htmlUrl ?? `https://github.co
         @exit="exitCodeBrowser"
       />
 
-      <!-- Two-column overview layout (special files + code directory browser) -->
-      <div
-        v-else
-        class="grid grid-cols-1 lg:grid-cols-12 gap-6"
-      >
-        <!-- Left column: Tabs + content -->
-        <div class="lg:col-span-8 space-y-6">
-          <RepoOverviewTabs
-            v-model:active-tab="activeTab"
-            :special-file-entries="specialFiles"
-            :active-content="specialFileContent"
-            :repo-context="repoContext"
-            :owner="owner"
-            :repo="repo"
-            :current-path="currentPath"
-            :entries="directoryEntries"
-            @navigate="navigateToPath"
-            @navigate-up="navigateUp"
-          />
-        </div>
-
-        <!-- Right sidebar: Header + Stats + Issues/PRs -->
-        <aside class="lg:col-span-4 space-y-6">
-          <!-- Repository header -->
-          <UCard>
-            <RepoDetailHeader :repo="repoDetail" />
-          </UCard>
-
-          <!-- Health dashboard -->
-          <RepoStatistics
-            v-if="stats"
+      <template v-else>
+        <!-- Hero header — full width -->
+        <UCard>
+          <RepoDetailHeader
+            :repo="repoDetail"
             :stats="stats"
           />
+        </UCard>
 
-          <UCard>
-            <template #header>
-              <div class="flex items-center gap-2">
-                <UIcon
-                  name="i-lucide-list"
-                  class="size-4 text-primary"
-                />
-                <span class="text-sm font-medium">
-                  {{ $t('repos.detail.lists') }}
-                </span>
-              </div>
-            </template>
+        <!-- Two-column layout: Content + Sidebar -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Main content area -->
+          <div class="lg:col-span-2 space-y-6">
+            <RepoOverviewTabs
+              v-model:active-tab="activeTab"
+              :special-file-entries="specialFiles"
+              :active-content="specialFileContent"
+              :repo-context="repoContext"
+              :owner="owner"
+              :repo="repo"
+              :current-path="currentPath"
+              :entries="directoryEntries"
+              @navigate="navigateToPath"
+              @navigate-up="navigateUp"
+            />
+          </div>
 
-            <div class="grid grid-cols-1 gap-2">
-              <UButton
-                block
-                variant="outline"
-                icon="i-lucide-layers"
-                :to="`/repos/${owner}/${repo}/work-items`"
-              >
-                {{ $t('repos.detail.workItems') }}
-              </UButton>
-              <UButton
-                block
-                variant="outline"
-                icon="i-lucide-circle-dot"
-                :to="`/repos/${owner}/${repo}/issues`"
-              >
-                {{ $t('nav.issues') }}
-              </UButton>
-              <UButton
-                block
-                variant="outline"
-                icon="i-lucide-git-pull-request"
-                :to="`/repos/${owner}/${repo}/pulls`"
-              >
-                {{ $t('nav.pullRequests') }}
-              </UButton>
-            </div>
-          </UCard>
+          <!-- Sidebar -->
+          <aside class="space-y-6">
+            <!-- Stats / About / Contributors / Activity (client-only to avoid hydration mismatch) -->
+            <ClientOnly>
+              <RepoStatistics
+                v-if="stats"
+                :stats="stats"
+                :default-branch="repoDetail.defaultBranch"
+              />
+            </ClientOnly>
 
-          <!-- Work Items -->
-          <UCard>
-            <template #header>
-              <div class="flex items-center gap-2">
-                <UIcon
-                  name="i-lucide-layers"
-                  class="size-4 text-primary"
-                />
-                <span class="text-sm font-medium">
+            <!-- Navigation -->
+            <UCard>
+              <template #header>
+                <div class="flex items-center gap-2">
+                  <UIcon
+                    name="i-lucide-list"
+                    class="size-4 text-primary"
+                  />
+                  <span class="text-sm font-medium">
+                    {{ $t('repos.detail.lists') }}
+                  </span>
+                </div>
+              </template>
+
+              <div class="grid grid-cols-1 gap-2">
+                <UButton
+                  block
+                  variant="outline"
+                  icon="i-lucide-layers"
+                  :to="localePath(`${repoBase}/work-items`)"
+                >
                   {{ $t('repos.detail.workItems') }}
-                </span>
+                </UButton>
+                <UButton
+                  block
+                  variant="outline"
+                  icon="i-lucide-circle-dot"
+                  :to="localePath(`${repoBase}/issues`)"
+                >
+                  {{ $t('nav.issues') }}
+                </UButton>
+                <UButton
+                  block
+                  variant="outline"
+                  icon="i-lucide-git-pull-request"
+                  :to="localePath(`${repoBase}/pulls`)"
+                >
+                  {{ $t('nav.pullRequests') }}
+                </UButton>
               </div>
-            </template>
-            <RepoWorkItemList
-              :owner="owner"
-              :repo="repo"
-              link-mode="repo"
-            />
-          </UCard>
+            </UCard>
 
-          <!-- Issues -->
-          <UCard>
-            <template #header>
-              <div class="flex items-center gap-2">
-                <UIcon
-                  name="i-lucide-circle-dot"
-                  class="size-4 text-rose-400"
-                />
-                <span class="text-sm font-medium">
-                  {{ $t('repos.detail.recentIssues') }}
-                </span>
-              </div>
-            </template>
-            <RepoIssueList
-              :owner="owner"
-              :repo="repo"
-              link-mode="repo"
-            />
-          </UCard>
-
-          <!-- Pull Requests -->
-          <UCard>
-            <template #header>
-              <div class="flex items-center gap-2">
-                <UIcon
-                  name="i-lucide-git-pull-request"
-                  class="size-4 text-blue-400"
-                />
-                <span class="text-sm font-medium">
-                  {{ $t('repos.detail.recentPrs') }}
-                </span>
-              </div>
-            </template>
-            <RepoPrList
-              :owner="owner"
-              :repo="repo"
-              link-mode="repo"
-            />
-          </UCard>
-        </aside>
-      </div>
+            <!-- Recent Work Items -->
+            <UCard>
+              <template #header>
+                <div class="flex items-center gap-2">
+                  <UIcon
+                    name="i-lucide-layers"
+                    class="size-4 text-primary"
+                  />
+                  <span class="text-sm font-medium">
+                    {{ $t('repos.detail.workItems') }}
+                  </span>
+                </div>
+              </template>
+              <RepoWorkItemList
+                :owner="owner"
+                :repo="repo"
+                link-mode="repo"
+              />
+            </UCard>
+          </aside>
+        </div>
+      </template>
     </template>
   </div>
 </template>

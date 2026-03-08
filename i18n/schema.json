@@ -541,12 +541,6 @@
             "workItems": {
               "type": "string"
             },
-            "recentIssues": {
-              "type": "string"
-            },
-            "recentPrs": {
-              "type": "string"
-            },
             "specialFiles": {
               "type": "object",
               "properties": {
@@ -598,9 +592,6 @@
             "stats": {
               "type": "object",
               "properties": {
-                "stars": {
-                  "type": "string"
-                },
                 "forks": {
                   "type": "string"
                 },
@@ -613,10 +604,13 @@
                 "openPrs": {
                   "type": "string"
                 },
-                "contributors": {
+                "about": {
                   "type": "string"
                 },
                 "topContributors": {
+                  "type": "string"
+                },
+                "andMore": {
                   "type": "string"
                 },
                 "lastCommit": {
@@ -631,8 +625,68 @@
                 "license": {
                   "type": "string"
                 },
+                "defaultBranch": {
+                  "type": "string"
+                },
                 "commitActivity": {
                   "type": "string"
+                },
+                "health": {
+                  "type": "string"
+                },
+                "healthCategory": {
+                  "type": "object",
+                  "properties": {
+                    "commits": {
+                      "type": "string"
+                    },
+                    "releases": {
+                      "type": "string"
+                    },
+                    "community": {
+                      "type": "string"
+                    },
+                    "activity": {
+                      "type": "string"
+                    },
+                    "license": {
+                      "type": "string"
+                    },
+                    "stars": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            "ownBanner": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "goals": {
+                  "type": "object",
+                  "properties": {
+                    "openSource": {
+                      "type": "string"
+                    },
+                    "noTracking": {
+                      "type": "string"
+                    },
+                    "communityDriven": {
+                      "type": "string"
+                    },
+                    "betterThanGithub": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
                 }
               },
               "additionalProperties": false

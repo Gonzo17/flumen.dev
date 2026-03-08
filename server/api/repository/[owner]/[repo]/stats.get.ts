@@ -8,12 +8,13 @@ interface CommitActivity {
 
 const fetchRepoStats = defineCachedFunction(
   async (token: string, owner: string, repo: string): Promise<RepoHealthStats> => {
-    const [repoRes, releaseRes, contributorsRes, activityRes, prCountRes] = await Promise.allSettled([
+    const [repoRes, releaseRes, contributorsRes, activityRes, prCountRes, languagesRes] = await Promise.allSettled([
       githubFetchWithToken<GitHubRepoDetail>(token, `/repos/${owner}/${repo}`),
       githubFetchWithToken<GitHubRelease>(token, `/repos/${owner}/${repo}/releases/latest`),
       githubFetchWithToken<GitHubContributor[]>(token, `/repos/${owner}/${repo}/contributors`, { params: { per_page: 10 } }),
       githubFetchWithToken<CommitActivity[]>(token, `/repos/${owner}/${repo}/stats/commit_activity`),
       githubFetchWithToken<{ total_count: number }>(token, `/search/issues`, { params: { q: `repo:${owner}/${repo} is:pr is:open`, per_page: 1 } }),
+      githubFetchWithToken<Record<string, number>>(token, `/repos/${owner}/${repo}/languages`),
     ])
 
     const repoData = repoRes.status === 'fulfilled' ? repoRes.value.data : null
@@ -21,6 +22,7 @@ const fetchRepoStats = defineCachedFunction(
     const contributors = contributorsRes.status === 'fulfilled' ? contributorsRes.value : null
     const activity = activityRes.status === 'fulfilled' ? activityRes.value.data : null
     const prCount = prCountRes.status === 'fulfilled' ? prCountRes.value.data.total_count : 0
+    const languages = languagesRes.status === 'fulfilled' ? languagesRes.value.data : {}
 
     // Parse total contributor count from Link header (last page)
     let contributorsCount = 0
@@ -74,6 +76,7 @@ const fetchRepoStats = defineCachedFunction(
       weeklyCommitActivity: Array.isArray(activity)
         ? activity.slice(-12).map(w => w.total)
         : [],
+      languages,
     }
   },
   { maxAge: 600, name: 'repo-stats', getKey: (_token: string, owner: string, repo: string) => `${owner}/${repo}` },
