@@ -211,6 +211,19 @@
         "commitActivity": "Commit-Aktivität (12 Wochen)"
       }
     },
+    "diff": {
+      "title": "Branches vergleichen",
+      "base": "Basis",
+      "head": "Kopf",
+      "selectBranch": "Branch auswählen...",
+      "compare": "Vergleichen",
+      "split": "Geteilt",
+      "unified": "Vereint",
+      "empty": "Wähle zwei Branches zum Vergleichen.",
+      "expandUp": "Nach oben erweitern",
+      "expandDown": "Nach unten erweitern",
+      "expandAll": "Alle erweitern"
+    },
     "workItem": {
       "state": {
         "open": "Offen",
