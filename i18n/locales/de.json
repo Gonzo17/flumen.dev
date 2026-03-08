@@ -363,12 +363,20 @@
       "renamed": "hat den Titel geändert"
     },
     "sidebar": {
+      "involvement": "Du",
+      "author": "Autor",
+      "assignee": "Zugewiesen",
+      "reviewer": "Reviewer",
+      "commenter": "Kommentiert",
       "participants": "Beteiligte",
       "ownerActive": "Inhaber beteiligt sich",
       "mentions": "Erwähnungen",
+      "linked": "Verknüpft",
       "workItems": "Work Items",
       "reproductions": "Reproduktionen",
       "links": "Links",
+      "activity": "Aktivität",
+      "lastActivity": "Letzte Aktivität {time}",
       "showLess": "Weniger"
     },
     "comment": {

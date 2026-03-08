@@ -56,12 +56,12 @@ query($owner: String!, $repo: String!, $number: Int!) {
           ... on LabeledEvent {
             createdAt
             actor { login avatarUrl }
-            label { name }
+            label { name color }
           }
           ... on UnlabeledEvent {
             createdAt
             actor { login avatarUrl }
-            label { name }
+            label { name color }
           }
           ... on AssignedEvent {
             createdAt
@@ -227,12 +227,12 @@ query($owner: String!, $repo: String!, $number: Int!) {
           ... on LabeledEvent {
             createdAt
             actor { login avatarUrl }
-            label { name }
+            label { name color }
           }
           ... on UnlabeledEvent {
             createdAt
             actor { login avatarUrl }
-            label { name }
+            label { name color }
           }
           ... on AssignedEvent {
             createdAt
@@ -355,7 +355,7 @@ interface TimelineNode {
   state?: string
   author?: TimelineActor | null
   actor?: TimelineActor | null
-  label?: { name?: string } | null
+  label?: { name?: string, color?: string } | null
   assignee?: { login?: string } | null
   source?: (PullDetailNode | { __typename?: string, number: number, title: string, state: string, url: string }) | null
   milestoneTitle?: string
@@ -475,6 +475,7 @@ function mapSharedTimelineEvents(node: TimelineNode, base: TimelineBase): WorkIt
       ...base,
       kind: 'label',
       labelName: node.label?.name,
+      labelColor: node.label?.color ?? null,
       state: node.__typename === 'LabeledEvent' ? 'LABELED' : 'UNLABELED',
     }
   }

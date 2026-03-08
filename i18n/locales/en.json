@@ -363,12 +363,20 @@
       "renamed": "changed the title"
     },
     "sidebar": {
+      "involvement": "You",
+      "author": "Author",
+      "assignee": "Assigned",
+      "reviewer": "Reviewer",
+      "commenter": "Commented",
       "participants": "Participants",
       "ownerActive": "Owner joined the discussion",
       "mentions": "Mentions",
+      "linked": "Linked",
       "workItems": "Work Items",
       "reproductions": "Reproductions",
       "links": "Links",
+      "activity": "Activity",
+      "lastActivity": "Last activity {time}",
       "showLess": "Show less"
     },
     "comment": {

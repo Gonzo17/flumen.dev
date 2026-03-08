@@ -191,7 +191,8 @@ function timelineDescription(entry: WorkItemTimelineEntry): string | undefined {
 
 function toIssueEvent(entry: WorkItemTimelineEntry): IssueNonCommentEvent | null {
   if (entry.kind === 'label' && entry.labelName) {
-    const label = { name: entry.labelName, color: '6b7280' }
+    const fallbackColor = workItemRef.value?.labels.find(l => l.name === entry.labelName)?.color
+    const label = { name: entry.labelName, color: entry.labelColor ?? fallbackColor ?? 'a1a1aa' }
     if (entry.state === 'UNLABELED') {
       return { type: 'UnlabeledEvent', actor: entry.author, createdAt: entry.createdAt, label }
     }
