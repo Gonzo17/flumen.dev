@@ -248,5 +248,6 @@ export interface RepoHealthStats {
   contributorsCount: number
   topContributors: RepoContributor[]
   weeklyCommitActivity: number[]
+  languages: Record<string, number>
 }
 // #endregion
