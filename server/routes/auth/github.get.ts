@@ -22,7 +22,7 @@ export default defineOAuthGitHubEventHandler({
     // Redirect to originally requested URL or default locale root
     const redirect = getCookie(event, 'auth-redirect')
     deleteCookie(event, 'auth-redirect')
-    if (redirect?.startsWith('/')) {
+    if (redirect?.startsWith('/') && !redirect.startsWith('//')) {
       return sendRedirect(event, redirect)
     }
 
