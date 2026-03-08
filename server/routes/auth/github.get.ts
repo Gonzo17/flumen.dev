@@ -19,7 +19,13 @@ export default defineOAuthGitHubEventHandler({
       },
     })
 
-    // Set default locale based on user settings
+    // Redirect to originally requested URL or default locale root
+    const redirect = getCookie(event, 'auth-redirect')
+    deleteCookie(event, 'auth-redirect')
+    if (redirect?.startsWith('/') && !redirect.startsWith('//')) {
+      return sendRedirect(event, redirect)
+    }
+
     const settings = await useStorage('data').getItem<{ locale?: string }>(`users:${user.id}:settings`)
     const locale = settings?.locale || 'en'
     return sendRedirect(event, `/${locale}/`)
