@@ -218,7 +218,9 @@
       "expandUp": "Nach oben erweitern",
       "expandDown": "Nach unten erweitern",
       "expandAll": "Alle erweitern",
-      "fileCount": "{count} Datei | {count} Dateien"
+      "fileCount": "{count} Datei | {count} Dateien",
+      "wrap": "Zeilenumbruch",
+      "nowrap": "Kein Umbruch"
     },
     "workItem": {
       "state": {

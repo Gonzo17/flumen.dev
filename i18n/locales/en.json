@@ -218,7 +218,9 @@
       "expandUp": "Expand up",
       "expandDown": "Expand down",
       "expandAll": "Expand all",
-      "fileCount": "{count} file | {count} files"
+      "fileCount": "{count} file | {count} files",
+      "wrap": "Wrap lines",
+      "nowrap": "No wrap"
     },
     "workItem": {
       "state": {

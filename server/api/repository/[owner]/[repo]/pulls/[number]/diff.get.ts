@@ -69,6 +69,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: diffResponse.status, message: `GitHub API ${diffResponse.status}: ${diffResponse.statusText}` })
   }
 
+  if (!metaResponse.ok) {
+    throw createError({ statusCode: metaResponse.status, message: `GitHub API metadata ${metaResponse.status}: ${metaResponse.statusText}` })
+  }
+
   const diff = await diffResponse.text()
   const prData = await metaResponse.json() as {
     head: { sha: string, ref: string }
@@ -76,8 +80,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const headSha = prData.head.sha
-  const baseRef = prData.base.ref
-  const headRef = prData.head.ref
+  const baseSha = prData.base.sha
 
   const files: Record<string, PrDiffFile> = {}
 
@@ -91,8 +94,8 @@ export default defineEventHandler(async (event) => {
     await Promise.all(prFiles.map(async (file) => {
       const oldPath = file.previous_filename || file.filename
       const [oldContent, newContent] = await Promise.all([
-        file.status === 'added' ? Promise.resolve(null) : fetchFileContent(owner, repo, oldPath, baseRef, ghHeaders),
-        file.status === 'removed' ? Promise.resolve(null) : fetchFileContent(owner, repo, file.filename, headRef, ghHeaders),
+        file.status === 'added' ? Promise.resolve(null) : fetchFileContent(owner, repo, oldPath, baseSha, ghHeaders),
+        file.status === 'removed' ? Promise.resolve(null) : fetchFileContent(owner, repo, file.filename, headSha, ghHeaders),
       ])
       files[file.filename] = { oldContent, newContent }
     }))

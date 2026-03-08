@@ -663,6 +663,12 @@
             },
             "fileCount": {
               "type": "string"
+            },
+            "wrap": {
+              "type": "string"
+            },
+            "nowrap": {
+              "type": "string"
             }
           },
           "additionalProperties": false

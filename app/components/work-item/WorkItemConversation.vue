@@ -497,11 +497,11 @@ const timelineLocalReactions = ref<Record<string, ReactionGroup[]>>({})
 watch(timelineItems, (items) => {
   const next: Record<string, ReactionGroup[]> = {}
   for (const item of items) {
-    next[item.id] = timelineLocalReactions.value[item.id] ?? [...(item.reactionGroups ?? [])]
+    next[item.id] = item.reactionGroups?.length ? [...item.reactionGroups] : (timelineLocalReactions.value[item.id] ?? [])
     for (const rc of item.reviewComments ?? []) {
-      next[rc.id] = timelineLocalReactions.value[rc.id] ?? [...(rc.reactionGroups ?? [])]
+      next[rc.id] = rc.reactionGroups?.length ? [...rc.reactionGroups] : (timelineLocalReactions.value[rc.id] ?? [])
       for (const reply of getLocalReplies(rc.id, rc.replies)) {
-        next[reply.id] = timelineLocalReactions.value[reply.id] ?? [...(reply.reactionGroups ?? [])]
+        next[reply.id] = reply.reactionGroups?.length ? [...reply.reactionGroups] : (timelineLocalReactions.value[reply.id] ?? [])
       }
     }
   }

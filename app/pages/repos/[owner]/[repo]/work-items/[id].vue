@@ -80,6 +80,12 @@ provide('workItemRef', workItem)
 
 const activeTab = ref('conversation')
 
+watch([id, hasPr], () => {
+  if (!hasPr.value && activeTab.value !== 'conversation') {
+    activeTab.value = 'conversation'
+  }
+})
+
 const tabItems = computed(() => {
   const items = [
     { label: t('workItems.tabs.conversation'), value: 'conversation', icon: 'i-lucide-message-square' },

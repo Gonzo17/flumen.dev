@@ -54,7 +54,7 @@ export const usePrDiffCacheStore = defineStore('pr-diff-cache', () => {
     cache.value = rest
   }
 
-  return { get, set, invalidate }
+  return { cache, get, set, invalidate }
 }, {
   persist: {
     pick: ['cache'],

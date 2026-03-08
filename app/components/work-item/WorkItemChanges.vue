@@ -54,8 +54,9 @@ const fileDiffs = computed<FileDiff[]>(() => {
 })
 
 async function loadDiff() {
-  // Check cache first
-  const cached = diffCacheStore.get(props.owner, props.repo, props.pullNumber, props.headSha)
+  const { owner, repo, pullNumber, headSha } = props
+
+  const cached = diffCacheStore.get(owner, repo, pullNumber, headSha)
   if (cached) {
     diffData.value = cached
     return
@@ -66,10 +67,10 @@ async function loadDiff() {
 
   try {
     const result = await $fetch<PrDiffResult>(
-      `/api/repository/${props.owner}/${props.repo}/pulls/${props.pullNumber}/diff`,
+      `/api/repository/${owner}/${repo}/pulls/${pullNumber}/diff`,
     )
     diffData.value = result
-    diffCacheStore.set(props.owner, props.repo, props.pullNumber, result)
+    diffCacheStore.set(owner, repo, pullNumber, result)
   }
   catch (err: unknown) {
     error.value = (err as Error).message || t('common.error')
@@ -81,11 +82,16 @@ async function loadDiff() {
 
 onMounted(() => loadDiff())
 
-watch(() => props.headSha, (newSha, oldSha) => {
-  if (newSha && oldSha && newSha !== oldSha) {
-    loadDiff()
-  }
-})
+watch(
+  () => [props.owner, props.repo, props.pullNumber, props.headSha] as const,
+  ([, , , newSha], [prevOwner, prevRepo, prevNumber, oldSha]) => {
+    const identityChanged = props.owner !== prevOwner || props.repo !== prevRepo || props.pullNumber !== prevNumber
+    const shaChanged = newSha && oldSha && newSha !== oldSha
+    if (identityChanged || shaChanged) {
+      loadDiff()
+    }
+  },
+)
 </script>
 
 <template>
@@ -117,6 +123,7 @@ watch(() => props.headSha, (newSha, oldSha) => {
 
         <UButton
           :icon="wrap ? 'i-lucide-wrap-text' : 'i-lucide-move-horizontal'"
+          :aria-label="wrap ? t('repos.diff.nowrap') : t('repos.diff.wrap')"
           size="xs"
           variant="outline"
           class="ml-2"
