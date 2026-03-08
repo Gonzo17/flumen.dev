@@ -212,17 +212,13 @@
       }
     },
     "diff": {
-      "title": "Compare Branches",
-      "base": "Base",
-      "head": "Head",
-      "selectBranch": "Select branch...",
-      "compare": "Compare",
       "split": "Split",
       "unified": "Unified",
-      "empty": "Select two branches to compare.",
+      "empty": "No changes found.",
       "expandUp": "Expand up",
       "expandDown": "Expand down",
-      "expandAll": "Expand all"
+      "expandAll": "Expand all",
+      "fileCount": "{count} file | {count} files"
     },
     "workItem": {
       "state": {
@@ -426,6 +422,10 @@
     "all": "All"
   },
   "workItems": {
+    "tabs": {
+      "conversation": "Conversation",
+      "changes": "Changes"
+    },
     "badge": {
       "bot": "Bot"
     },

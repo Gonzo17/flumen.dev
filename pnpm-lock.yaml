@@ -12,8 +12,8 @@ importers:
   .:
     dependencies:
       '@flumen-dev/mutatio-view':
-        specifier: link:../mutatio-view/packages/mutatio-view
-        version: link:../mutatio-view/packages/mutatio-view
+        specifier: ^0.0.1-alpha.1
+        version: 0.0.1-alpha.1(vue@3.5.29(typescript@5.9.3))
       '@git-diff-view/core':
         specifier: ^0.1.1
         version: 0.1.1
@@ -753,6 +753,11 @@ packages:
 
   '@floating-ui/vue@1.1.10':
     resolution: {integrity: sha512-vdf8f6rHnFPPLRsmL4p12wYl+Ux4mOJOkjzKEMYVnwdf7UFdvBtHlLvQyx8iKG5vhPRbDRgZxdtpmyigDPjzYg==}
+
+  '@flumen-dev/mutatio-view@0.0.1-alpha.1':
+    resolution: {integrity: sha512-FjYpFt3l7XsRmMO+Y2STBROloTKhbYP7qRJYd5Cuof8J2temUaWiJvKpTCi2Wf9qRzL18pr0IlFY6Pr6o5DqpA==}
+    peerDependencies:
+      vue: ^3.4.0
 
   '@git-diff-view/core@0.1.1':
     resolution: {integrity: sha512-8bjNPT3oLAo7mqTRu79WEC44scIBjTtA9iXvvbqfbR2w2GM/FPZajmhPvgIre+YKe2jfTNFjhV2UcbjOarRKfA==}
@@ -7012,6 +7017,11 @@ snapshots:
     transitivePeerDependencies:
       - '@vue/composition-api'
       - vue
+
+  '@flumen-dev/mutatio-view@0.0.1-alpha.1(vue@3.5.29(typescript@5.9.3))':
+    dependencies:
+      '@git-diff-view/core': 0.1.1
+      vue: 3.5.29(typescript@5.9.3)
 
   '@git-diff-view/core@0.1.1':
     dependencies:

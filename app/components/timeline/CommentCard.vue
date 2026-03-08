@@ -77,10 +77,6 @@ const hasFooterContent = computed(() => {
 const showQuickReactions = computed(() => {
   return loggedIn.value && hovered.value && props.subjectId && props.issueNumber !== undefined
 })
-
-const hasActions = computed(() => {
-  return props.viewerCanUpdate || (props.viewerCanDelete && !props.isInitial)
-})
 </script>
 
 <template>
@@ -105,8 +101,7 @@ const hasActions = computed(() => {
       >
         <div
           v-if="showQuickReactions"
-          class="absolute -top-3 z-10"
-          :class="hasActions ? 'right-28' : 'right-2'"
+          class="absolute -top-7 right-2 z-10"
         >
           <TimelineQuickReactions
             :subject-id="subjectId!"

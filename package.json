@@ -23,7 +23,7 @@
     "i18n:schema": "node --experimental-strip-types scripts/generate-i18n-schema.ts"
   },
   "dependencies": {
-    "@flumen-dev/mutatio-view": "link:../mutatio-view/packages/mutatio-view",
+    "@flumen-dev/mutatio-view": "^0.0.1-alpha.1",
     "@git-diff-view/core": "^0.1.1",
     "@nuxt/image": "2.0.0",
     "@nuxt/ui": "4.5.0",

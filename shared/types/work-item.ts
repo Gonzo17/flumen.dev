@@ -49,6 +49,7 @@ export interface WorkItemContribution {
   reviewDecision: WorkItemReviewDecision
   ciStatus: WorkItemCiStatus
   updatedAt: string
+  headSha?: string
 }
 
 export interface ReviewComment {
@@ -128,6 +129,7 @@ export interface WorkItemDetail extends WorkItem {
   }
   headBranch?: string | null
   headBranchRepo?: string | null
+  headSha?: string
   reviewers?: Reviewer[]
 }
 

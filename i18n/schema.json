@@ -640,6 +640,33 @@
           },
           "additionalProperties": false
         },
+        "diff": {
+          "type": "object",
+          "properties": {
+            "split": {
+              "type": "string"
+            },
+            "unified": {
+              "type": "string"
+            },
+            "empty": {
+              "type": "string"
+            },
+            "expandUp": {
+              "type": "string"
+            },
+            "expandDown": {
+              "type": "string"
+            },
+            "expandAll": {
+              "type": "string"
+            },
+            "fileCount": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
         "workItem": {
           "type": "object",
           "properties": {
@@ -1246,6 +1273,18 @@
     "workItems": {
       "type": "object",
       "properties": {
+        "tabs": {
+          "type": "object",
+          "properties": {
+            "conversation": {
+              "type": "string"
+            },
+            "changes": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
         "badge": {
           "type": "object",
           "properties": {

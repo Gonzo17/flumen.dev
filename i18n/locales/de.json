@@ -212,17 +212,13 @@
       }
     },
     "diff": {
-      "title": "Branches vergleichen",
-      "base": "Basis",
-      "head": "Kopf",
-      "selectBranch": "Branch auswählen...",
-      "compare": "Vergleichen",
       "split": "Geteilt",
       "unified": "Vereint",
-      "empty": "Wähle zwei Branches zum Vergleichen.",
+      "empty": "Keine Änderungen gefunden.",
       "expandUp": "Nach oben erweitern",
       "expandDown": "Nach unten erweitern",
-      "expandAll": "Alle erweitern"
+      "expandAll": "Alle erweitern",
+      "fileCount": "{count} Datei | {count} Dateien"
     },
     "workItem": {
       "state": {
@@ -426,6 +422,10 @@
     "all": "Alle"
   },
   "workItems": {
+    "tabs": {
+      "conversation": "Konversation",
+      "changes": "\u00c4nderungen"
+    },
     "badge": {
       "bot": "Bot"
     },
