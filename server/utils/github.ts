@@ -98,7 +98,9 @@ export async function githubFetchWithToken<T>(
   })
 
   if (!response.ok) {
-    throw new GitHubError(response.status, endpoint, `GitHub API ${response.status}: ${response.statusText}`)
+    const errorBody = await response.json().catch(() => null) as { message?: string, errors?: { message?: string }[] } | null
+    const detail = errorBody?.errors?.[0]?.message ?? errorBody?.message ?? response.statusText
+    throw new GitHubError(response.status, endpoint, detail)
   }
 
   const data = await response.json() as T
