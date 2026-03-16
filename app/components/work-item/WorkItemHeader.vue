@@ -222,6 +222,8 @@ async function handleMerge() {
   if ((!canMerge.value && !canBypassRules.value) || merging.value) return
   merging.value = true
   try {
+    // Refresh merge status to get latest headSha (avoids "head branch was modified" errors)
+    await fetchMergeStatus()
     await executeMerge(
       mergeStrategy.value,
       mergeStrategy.value !== 'rebase' ? mergeTitle.value : undefined,
