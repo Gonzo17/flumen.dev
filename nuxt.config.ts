@@ -39,6 +39,9 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
 
   nitro: {
+    externals: {
+      inline: ['unhead'],
+    },
     storage: {
       data: {
         driver: process.env.STORAGE_DRIVER || 'fs',
