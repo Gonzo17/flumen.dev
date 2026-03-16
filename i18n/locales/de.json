@@ -447,6 +447,31 @@
     }
   },
   "workItems": {
+    "quick": {
+      "newest": "Neueste",
+      "mostDiscussed": "Meistdiskutiert",
+      "stale": "Veraltet",
+      "needsReview": "Review nötig",
+      "myItems": "Meine Items"
+    },
+    "search": {
+      "placeholder": "Work Items suchen...",
+      "allTypes": "Alle Typen",
+      "author": "Autor",
+      "assignee": "Zugewiesen",
+      "label": "Label",
+      "clear": "Filter zurücksetzen"
+    },
+    "source": {
+      "issue": "Aus Issue-Thread",
+      "pr": "Aus Pull Request"
+    },
+    "type": {
+      "issue": "Issue",
+      "pr": "Pull Request",
+      "issueWithPr": "Issue mit verlinktem Pull Request",
+      "prWithIssue": "Pull Request mit verlinktem Issue"
+    },
     "open": "Offen",
     "closed": "Geschlossen",
     "noResults": "Keine Work Items gefunden.",
@@ -469,6 +494,9 @@
     },
     "merge": {
       "readyToMerge": "Bereit zum Mergen",
+      "hasConflicts": "Merge-Konflikte — vor dem Mergen auflösen",
+      "blocked": "Checks oder Reviews blockieren den Merge",
+      "blockedBypass": "Blockiert — du kannst als Admin umgehen",
       "merge": "Mergen",
       "keepAll": "Alle Commits behalten",
       "keepAllDesc": "Alle {count} Commits werden mit einem Merge-Commit in den Zielbranch übernommen.",
@@ -479,6 +507,12 @@
       "commitTitle": "Commit-Titel",
       "commitMessage": "Weitere Details (optional)",
       "confirmMerge": "Pull Request mergen",
+      "mergeBypass": "Ohne Anforderungen mergen",
+      "bypassHint": "Anforderungen nicht erfüllt. Du kannst als Administrator mergen.",
+      "draftHint": "Dieser Pull Request ist noch ein Entwurf.",
+      "markReady": "Bereit für Review",
+      "markedReady": "Als bereit markiert",
+      "markReadyFailed": "Konnte nicht als bereit markiert werden",
       "mergeSuccess": "Pull Request gemergt",
       "mergeFailed": "Merge fehlgeschlagen",
       "deleteBranch": "Branch löschen",
@@ -616,7 +650,7 @@
     "source": "Quelltext",
     "wysiwyg": "Vorschau",
     "editedAgo": "bearbeitet {time}",
-    "imageReadError": "Das ausgewählte Bild konnte nicht gelesen werden.",
+    "imageUploadError": "Bild-Upload fehlgeschlagen.",
     "toolbar": {
       "headings": "Überschriften",
       "heading1": "Überschrift 1",
@@ -678,8 +712,7 @@
     "pushAndCreatePr": "Pushen & PR erstellen",
     "pushWithPr": "Gepusht & PR erstellt",
     "pushFailed": "Push fehlgeschlagen",
-    "nothingToPush": "Nichts zu pushen",
-    "viewPr": "PR ansehen"
+    "nothingToPush": "Nichts zu pushen"
   },
   "dashboard": {
     "description": "Was gerade deine Aufmerksamkeit braucht.",
@@ -890,5 +923,23 @@
       "skinGrass": "Gras",
       "skinFire": "Feuer"
     }
+  },
+  "rateLimit": {
+    "label": "API-Nutzung",
+    "resetsIn": "Reset in {min}min",
+    "resetsNow": "wird zurückgesetzt...",
+    "tooltip": "GitHub API-Anfragen in dieser Stunde. Wird automatisch zurückgesetzt. Hohe Nutzung kann Flumens Funktionen vorübergehend einschränken."
+  },
+  "pendingPr": {
+    "hadRecentPush": "{count} Commit voraus | {count} Commits voraus",
+    "createPr": "Pull Request erstellen",
+    "created": "Pull Request erstellt!",
+    "createFailed": "Pull Request konnte nicht erstellt werden",
+    "prTitle": "Pull-Request-Titel",
+    "draftPr": "Als Entwurf erstellen",
+    "commitsAhead": "{count} Commit voraus | {count} Commits voraus",
+    "linkIssue": "Issue verknüpfen",
+    "searchIssue": "Issues suchen...",
+    "draftHint": "Als Entwurf erstellt. Markiere als bereit wenn du fertig bist."
   }
 }
