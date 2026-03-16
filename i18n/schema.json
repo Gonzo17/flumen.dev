@@ -1348,6 +1348,36 @@
     "workItems": {
       "type": "object",
       "properties": {
+        "source": {
+          "type": "object",
+          "properties": {
+            "issue": {
+              "type": "string"
+            },
+            "pr": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "type": {
+          "type": "object",
+          "properties": {
+            "issue": {
+              "type": "string"
+            },
+            "pr": {
+              "type": "string"
+            },
+            "issueWithPr": {
+              "type": "string"
+            },
+            "prWithIssue": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
         "open": {
           "type": "string"
         },
@@ -2060,9 +2090,6 @@
           "type": "string"
         },
         "nothingToPush": {
-          "type": "string"
-        },
-        "viewPr": {
           "type": "string"
         }
       },
